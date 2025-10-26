@@ -1,11 +1,14 @@
 import multer from 'multer';
 import { Client } from 'minio';
-import { v4 as uuidv4 } from 'uuid';
+import * as crypto from 'crypto';
 import path from 'path';
+
+// Reemplazar uuid con una función personalizada
+const generateId = () => crypto.randomBytes(16).toString('hex');
 
 // Configure MinIO client
 const minioClient = new Client({
-  endPoint: process.env.MINIO_ENDPOINT || 'localhost',
+  endPoint: process.env.MINIO_ENDPOINT || 'minio',  // Usar el nombre del servicio en docker-compose
   port: parseInt(process.env.MINIO_PORT || '9000'),
   useSSL: false,
   accessKey: process.env.MINIO_ACCESS_KEY || 'minioadmin',
@@ -72,7 +75,7 @@ export const uploadToMinio = async (req: any, res: any, next: any) => {
     for (const field in req.files) {
       for (const file of req.files[field]) {
         const extension = path.extname(file.originalname);
-        const filename = `${uuidv4()}${extension}`;
+        const filename = `${generateId()}${extension}`;
         
         await minioClient.putObject(
           bucketName,

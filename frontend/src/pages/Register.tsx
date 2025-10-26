@@ -6,11 +6,11 @@ import {
   Typography,
   TextField,
   Button,
-  Alert,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/auth';
 import { RegisterData, authApi } from '../services/api';
+import { notifications } from '../services/notifications';
 
 export default function Register() {
   const [formData, setFormData] = useState<RegisterData>({
@@ -18,22 +18,23 @@ export default function Register() {
     email: '',
     password: '',
   });
-  const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
+    notifications.loading();
 
     try {
       const response = await authApi.register(formData);
       setAuth(response.data.token, response.data.user);
+      notifications.close();
+      notifications.success('¡Registro exitoso! Bienvenido.');
       navigate('/');
     } catch (err: any) {
-      setError(
+      notifications.error(
         err.response?.data?.message || 'Error al registrar usuario'
       );
     } finally {
@@ -73,11 +74,7 @@ export default function Register() {
             Registro de Usuario
           </Typography>
 
-          {error && (
-            <Alert severity="error" sx={{ mt: 2, mb: 2 }}>
-              {error}
-            </Alert>
-          )}
+
 
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
             <TextField

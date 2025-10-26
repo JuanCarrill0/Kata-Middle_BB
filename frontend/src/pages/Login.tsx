@@ -6,33 +6,34 @@ import {
   Typography,
   TextField,
   Button,
-  Alert,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/auth';
 import { LoginData, authApi } from '../services/api';
+import { notifications } from '../services/notifications';
 
 export default function Login() {
   const [formData, setFormData] = useState<LoginData>({
     email: '',
     password: '',
   });
-  const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
+    notifications.loading();
 
     try {
       const response = await authApi.login(formData);
       setAuth(response.data.token, response.data.user);
-      navigate('/');
+      notifications.close();
+      notifications.success('¡Bienvenido de vuelta!');
+      navigate('/dashboard');
     } catch (err: any) {
-      setError(
+      notifications.error(
         err.response?.data?.message || 'Error al iniciar sesión'
       );
     } finally {
@@ -72,11 +73,7 @@ export default function Login() {
             Iniciar Sesión
           </Typography>
 
-          {error && (
-            <Alert severity="error" sx={{ mt: 2, mb: 2 }}>
-              {error}
-            </Alert>
-          )}
+
 
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
             <TextField

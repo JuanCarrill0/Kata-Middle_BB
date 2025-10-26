@@ -2,6 +2,14 @@ import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User';
+import { SignOptions } from 'jsonwebtoken';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_key_here';
+const JWT_EXPIRES_IN = '24h';
+
+const signOptions: SignOptions = {
+  expiresIn: JWT_EXPIRES_IN
+};
 
 const router = Router();
 
@@ -29,8 +37,8 @@ router.post('/register', async (req, res) => {
     // Generate token
     const token = jwt.sign(
       { userId: user._id },
-      process.env.JWT_SECRET!,
-      { expiresIn: process.env.JWT_EXPIRES_IN }
+      JWT_SECRET,
+      signOptions
     );
 
     res.status(201).json({
@@ -67,8 +75,8 @@ router.post('/login', async (req, res) => {
     // Generate token
     const token = jwt.sign(
       { userId: user._id },
-      process.env.JWT_SECRET!,
-      { expiresIn: process.env.JWT_EXPIRES_IN }
+      JWT_SECRET,
+      signOptions
     );
 
     res.json({

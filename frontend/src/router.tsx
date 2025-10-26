@@ -1,5 +1,6 @@
 import {
   Route,
+  Navigate,
   createBrowserRouter,
   createRoutesFromElements,
 } from 'react-router-dom';
@@ -16,10 +17,11 @@ import PrivateRoute from './components/PrivateRoute';
 export const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<App />}>
+      <Route index element={<Navigate to="/login" />} />
       <Route path="login" element={<Login />} />
       <Route path="register" element={<Register />} />
       <Route element={<PrivateRoute />}>
-        <Route index element={<Dashboard />} />
+        <Route path="dashboard" element={<Dashboard />} />
         <Route path="courses" element={<Courses />} />
         <Route path="courses/:id" element={<CourseDetail />} />
         <Route path="profile" element={<Profile />} />

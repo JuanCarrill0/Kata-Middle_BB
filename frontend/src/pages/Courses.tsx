@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import { useQuery } from '@tanstack/react-query';
 import { coursesApi } from '../services/api';
 import {
@@ -12,6 +13,16 @@ import {
 } from '@mui/material';
 import { Link } from 'react-router-dom';
 
+type CourseCategory = 'fullstack' | 'apis' | 'cloud' | 'data';
+
+interface Course {
+  _id: string;
+  title: string;
+  description: string;
+  category: CourseCategory;
+  thumbnail: string;
+}
+
 const categoryColors = {
   fullstack: 'primary',
   apis: 'secondary',
@@ -20,7 +31,7 @@ const categoryColors = {
 } as const;
 
 const Courses = () => {
-  const { data: courses, isLoading } = useQuery(['courses'], () =>
+  const { data: courses, isLoading } = useQuery<Course[]>(['courses'], () =>
     coursesApi.getAll().then((res) => res.data)
   );
 
@@ -34,7 +45,7 @@ const Courses = () => {
         Cursos Disponibles
       </Typography>
       <Grid container spacing={3}>
-        {courses?.map((course: any) => (
+        {courses?.map((course: Course) => (
           <Grid item xs={12} sm={6} md={4} key={course._id}>
             <Card>
               <CardMedia
