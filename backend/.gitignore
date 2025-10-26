@@ -1,0 +1,25 @@
+# Dependencias
+node_modules/
+dist/
+
+# Variables de entorno
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Directorios de cobertura
+coverage/
+
+# Archivos temporales
+.tmp/
+.temp/
+
+# Archivos de TypeScript
+*.tsbuildinfo
