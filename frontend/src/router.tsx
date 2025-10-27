@@ -10,10 +10,12 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Courses from './pages/Courses';
 import CourseDetail from './pages/CourseDetail';
+import AddChapter from './pages/AddChapter';
 import ModuleCourses from './pages/ModuleCourses';
 import Profile from './pages/Profile';
 import NotFound from './pages/NotFound';
 import PrivateRoute from './components/PrivateRoute';
+import AddCourse from './pages/AddCourse';
 import { useAuthStore } from './stores/auth';
 
 const RootIndexRedirect = () => {
@@ -30,8 +32,10 @@ export const router = createBrowserRouter(
       <Route element={<PrivateRoute />}>
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="modules/:moduleId" element={<ModuleCourses />} />
+    <Route path="modules/:moduleId/add-course" element={<AddCourse />} />
         <Route path="courses" element={<Courses />} />
         <Route path="courses/:id" element={<CourseDetail />} />
+  <Route path="courses/:id/add-chapter" element={<AddChapter />} />
         <Route path="profile" element={<Profile />} />
       </Route>
       <Route path="*" element={<NotFound />} />

@@ -35,8 +35,11 @@ export const coursesApi = {
   getAll: () => api.get<Course[]>('/api/courses'),
   getById: (id: string) => api.get<Course>(`/api/courses/${id}`),
   create: (data: FormData) => api.post<Course>('/api/courses', data),
+  // Add chapter with files (expects multipart/form-data with fields title, description and files[])
+  addChapter: (id: string, data: FormData) => api.post<Course>(`/api/courses/${id}/chapters`, data),
   update: (id: string, data: FormData) => api.put<Course>(`/api/courses/${id}`, data),
   delete: (id: string) => api.delete(`/api/courses/${id}`),
+  deleteChapter: (courseId: string, chapterId: string) => api.delete(`/api/courses/${courseId}/chapters/${chapterId}`),
   complete: (id: string) => api.post<{ message: string }>(`/api/courses/${id}/complete`),
   completeChapter: (courseId: string, chapterId: string) => 
     api.post<{ message: string }>(`/api/courses/${courseId}/chapters/${chapterId}/complete`),

@@ -7,6 +7,7 @@ import authRoutes from './routes/auth';
 import courseRoutes from './routes/courses';
 import badgeRoutes from './routes/badges';
 import userRoutes from './routes/users';
+import fileRoutes from './routes/files';
 
 dotenv.config();
 
@@ -32,6 +33,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/badges', badgeRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/files', fileRoutes);
 
 // Connect to MongoDB
 const startServer = async () => {

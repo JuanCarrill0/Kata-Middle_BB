@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { coursesApi } from '../services/api';
 import { notifications } from '../services/notifications';
 import { Course } from '../types';
@@ -24,8 +24,19 @@ export default function ModuleCourses() {
     }
   });
 
+  const queryClient = useQueryClient();
+  const deleteCourseMutation = useMutation((courseId: string) => coursesApi.delete(courseId), {
+    onSuccess: () => {
+      queryClient.invalidateQueries(['courses']);
+      notifications.success('Curso eliminado');
+    },
+    onError: (error: any) => {
+      notifications.error(error.response?.data?.message || 'Error al eliminar curso');
+    }
+  });
+
   const courses = Array.isArray(coursesResponse?.data) 
-    ? coursesResponse.data.filter((course: Course) => course.module === moduleId)
+    ? coursesResponse.data.filter((course: Course) => course.category === moduleId)
     : [];
 
   const getProgress = (courseId: string) => {
@@ -52,16 +63,19 @@ export default function ModuleCourses() {
         {moduleNames[moduleId as keyof typeof moduleNames]}
       </h1>
 
+      {user && (user.role === 'admin' || user.role === 'teacher') && (
+        <div style={{ marginBottom: 12 }}>
+          <a href={`/modules/${moduleId}/add-course`} className="view-course-button">Crear curso en este módulo</a>
+        </div>
+      )}
+
       {isLoading ? (
         <div className="loading-bar" />
       ) : courses?.length ? (
         <div className="courses-grid">
           {courses.map((course: Course) => (
-            <div
-              className="course-card"
-              onClick={() => navigate(`/courses/${course.id}`)}
-              key={course.id}
-            >
+            <div key={course.id} className="course-card">
+              <div className="course-card-clickable" onClick={() => navigate(`/courses/${course.id}`)}>
               <div className="course-content">
                 {course.imageUrl && (
                   <img
@@ -88,6 +102,24 @@ export default function ModuleCourses() {
                   </span>
                 </div>
               </div>
+              </div>
+
+              {user && (user.role === 'admin' || user.role === 'teacher') && (
+                <div style={{ padding: 8 }}>
+                  <a href={`/courses/${course.id}/add-chapter`} className="view-course-button">Agregar capítulo</a>
+                  <button
+                    style={{ marginLeft: 8 }}
+                    className="view-course-button danger"
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      const confirmed = await notifications.confirm('Se eliminará el curso y sus archivos asociados.');
+                      if (confirmed.isConfirmed) {
+                        deleteCourseMutation.mutate(course.id);
+                      }
+                    }}
+                  >Eliminar curso</button>
+                </div>
+              )}
             </div>
           ))}
         </div>

@@ -28,28 +28,28 @@ export default function Dashboard() {
       description: 'Desarrollo web completo: Frontend, Backend y más',
       icon: '💻',
       path: '/modules/fullstack',
-      coursesCount: courses?.filter((course: Course) => course.module === 'fullstack').length || 0
+  coursesCount: courses?.filter((course: Course) => course.category === 'fullstack').length || 0
     },
     {
       title: 'APIs e Integraciones',
       description: 'DataPower, IBM Bus, Broker, APIs, Microservicios',
       icon: '🔌',
       path: '/modules/apis',
-      coursesCount: courses?.filter((course: Course) => course.module === 'apis').length || 0
+  coursesCount: courses?.filter((course: Course) => course.category === 'apis').length || 0
     },
     {
       title: 'Cloud',
       description: 'Computación en la nube y servicios cloud',
       icon: '☁️',
       path: '/modules/cloud',
-      coursesCount: courses?.filter((course: Course) => course.module === 'cloud').length || 0
+  coursesCount: courses?.filter((course: Course) => course.category === 'cloud').length || 0
     },
     {
       title: 'Data Engineer',
       description: 'Ingeniería y análisis de datos',
       icon: '📊',
       path: '/modules/data',
-      coursesCount: courses?.filter((course: Course) => course.module === 'data').length || 0
+  coursesCount: courses?.filter((course: Course) => course.category === 'data').length || 0
     }
   ];
 

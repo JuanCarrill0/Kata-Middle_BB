@@ -43,8 +43,8 @@ const Courses = () => {
                 {course.description}
               </p>
               <div className="course-footer">
-                <span className={`category-chip ${course.module}`}>
-                  {course.module}
+                <span className={`category-chip ${course.category}`}>
+                  {course.category}
                 </span>
                 <Link 
                   to={`/courses/${course.id}`}

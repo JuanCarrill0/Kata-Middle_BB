@@ -11,7 +11,7 @@ export interface Course {
   id: string;
   title: string;
   description: string;
-  module: 'fullstack' | 'apis' | 'cloud' | 'data';
+  category: 'fullstack' | 'apis' | 'cloud' | 'data';
   chapters: Chapter[];
   imageUrl?: string;
   createdAt: Date;
@@ -22,10 +22,11 @@ export interface Chapter {
   id: string;
   title: string;
   description: string;
-  content: string;
+  content: {
+    type: 'video' | 'pdf' | 'presentation' | 'image';
+    url: string;
+  }[];
   order: number;
-  videoUrl?: string;
-  documentUrl?: string;
   isCompleted?: boolean;
 }
 
@@ -33,7 +34,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'user' | 'admin';
+  role: 'user' | 'admin' | 'teacher';
   badges: Badge[];
   progress: {
     courseId: string;

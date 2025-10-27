@@ -58,7 +58,7 @@ const courseSchema = new Schema<ICourse>(
     badge: {
       type: Schema.Types.ObjectId,
       ref: 'Badge',
-      required: true,
+      required: false,
     },
     createdBy: {
       type: Schema.Types.ObjectId,
@@ -70,5 +70,15 @@ const courseSchema = new Schema<ICourse>(
     timestamps: true,
   }
 );
+
+// Make sure JSON output has `id` instead of `_id`, and remove __v
+courseSchema.set('toJSON', {
+  virtuals: true,
+  versionKey: false,
+  transform: function (_doc, ret) {
+    ret.id = ret._id;
+    delete ret._id;
+  }
+});
 
 export const Course = model<ICourse>('Course', courseSchema);
