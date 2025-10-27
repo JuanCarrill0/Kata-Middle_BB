@@ -1,0 +1,91 @@
+.dashboard-container {
+  padding: 2rem;
+}
+
+.dashboard-grid {
+  display: grid;
+  gap: 2rem;
+}
+
+.welcome-section {
+  margin-bottom: 2rem;
+}
+
+.welcome-title {
+  font-size: 2rem;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+.badges-section {
+  background-color: var(--surface-color);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+  margin-bottom: 2rem;
+}
+
+.badges-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.badges-title {
+  font-size: 1.25rem;
+  margin-left: 0.5rem;
+}
+
+.badges-icon {
+  width: 24px;
+  height: 24px;
+  color: var(--primary-color);
+}
+
+.badges-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+
+.no-badges-text {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.modules-grid {
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: repeat(1, 1fr);
+}
+
+@media (min-width: 600px) {
+  .modules-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 960px) {
+  .modules-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Iconos para los módulos */
+.module-icon {
+  width: 32px;
+  height: 32px;
+  color: var(--primary-color);
+}
+
+/* Contenedor para los iconos de módulo */
+.icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background-color: rgba(25, 118, 210, 0.1);
+  border-radius: 50%;
+  margin-bottom: 1rem;
+}

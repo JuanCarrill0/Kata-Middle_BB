@@ -1,19 +1,7 @@
-import { useState } from 'react';
-import {
-  AppBar,
-  Box,
-  Toolbar,
-  IconButton,
-  Typography,
-  Menu,
-  Container,
-  Avatar,
-  Tooltip,
-  MenuItem,
-  Button,
-} from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/auth';
+import './Navigation.css';
 
 const pages = [
   { name: 'Inicio', path: '/' },
@@ -21,23 +9,34 @@ const pages = [
 ];
 
 function Navigation() {
-  const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const avatarRef = useRef<HTMLButtonElement>(null);
   const navigate = useNavigate();
-  const { user, logout } = useAuthStore((state) => ({
-    user: state.user,
-    logout: state.logout,
-  }));
+  // Use separate selectors to avoid creating a new object each render
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
 
-  const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorElUser(event.currentTarget);
-  };
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && avatarRef.current && 
+          !menuRef.current.contains(event.target as Node) && 
+          !avatarRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    }
 
-  const handleCloseUserMenu = () => {
-    setAnchorElUser(null);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
   };
 
   const handleNavigate = (path: string) => {
     navigate(path);
+    setIsMenuOpen(false);
   };
 
   const handleLogout = () => {
@@ -46,63 +45,65 @@ function Navigation() {
   };
 
   return (
-    <AppBar position="static">
-      <Container maxWidth="xl">
-        <Toolbar disableGutters>
-          <Typography
-            variant="h6"
-            noWrap
-            component="div"
-            sx={{ mr: 2, display: { xs: 'none', md: 'flex' } }}
-          >
+    <nav className="nav">
+      <div className="nav-container">
+        <div className="nav-toolbar">
+          <Link to="/" className="nav-logo">
             Portal de Capacitaciones
-          </Typography>
+          </Link>
 
-          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
+          <div className="nav-links">
             {pages.map((page) => (
-              <Button
+              <Link
                 key={page.path}
-                onClick={() => handleNavigate(page.path)}
-                sx={{ my: 2, color: 'white', display: 'block' }}
+                to={page.path}
+                className="nav-link"
               >
                 {page.name}
-              </Button>
+              </Link>
             ))}
-          </Box>
+          </div>
 
-          <Box sx={{ flexGrow: 0 }}>
-            <Tooltip title="Abrir menú">
-              <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                <Avatar>{user?.name?.charAt(0) || 'U'}</Avatar>
-              </IconButton>
-            </Tooltip>
-            <Menu
-              sx={{ mt: '45px' }}
-              id="menu-appbar"
-              anchorEl={anchorElUser}
-              anchorOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              open={Boolean(anchorElUser)}
-              onClose={handleCloseUserMenu}
+          <div className="nav-user">
+            <button
+              ref={avatarRef}
+              className="nav-avatar"
+              onClick={toggleMenu}
+              title="Abrir menú"
             >
-              <MenuItem onClick={() => handleNavigate('/profile')}>
-                <Typography textAlign="center">Mi Perfil</Typography>
-              </MenuItem>
-              <MenuItem onClick={handleLogout}>
-                <Typography textAlign="center">Cerrar Sesión</Typography>
-              </MenuItem>
-            </Menu>
-          </Box>
-        </Toolbar>
-      </Container>
-    </AppBar>
+              {user?.name?.charAt(0) || 'U'}
+            </button>
+            
+            <div 
+              ref={menuRef}
+              className={`nav-menu ${isMenuOpen ? 'open' : ''}`}
+            >
+              <a 
+                href="#" 
+                className="nav-menu-item"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleNavigate('/profile');
+                }}
+              >
+                Mi Perfil
+              </a>
+              <div className="nav-menu-divider" />
+              <a 
+                href="#" 
+                className="nav-menu-item"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleLogout();
+                }}
+              >
+                Cerrar Sesión
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
   );
 }
 

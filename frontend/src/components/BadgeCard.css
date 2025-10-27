@@ -1,0 +1,48 @@
+.badge-card {
+  width: 100px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.badge-card:hover {
+  transform: translateY(-4px);
+}
+
+.badge-content {
+  padding: 1rem;
+}
+
+.badge-image {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.badge-title {
+  font-size: 0.75rem;
+  text-align: center;
+  margin-top: 0.5rem;
+  color: #333;
+}
+
+.badge-tooltip {
+  position: relative;
+}
+
+.badge-tooltip:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.5rem;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  font-size: 0.75rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  z-index: 1000;
+}

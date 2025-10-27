@@ -1,37 +1,24 @@
-# Etapa de construcción
-FROM node:18-alpine AS builder
-
-WORKDIR /app
-
-# Copiar archivos de configuración
-COPY package*.json ./
-COPY tsconfig.json ./
-
-# Instalar todas las dependencias (incluyendo devDependencies)
-RUN npm install
-
-# Copiar código fuente
-COPY src/ ./src/
-
-# Compilar TypeScript
-RUN npm run build
-
-# Etapa de producción
 FROM node:18-alpine
 
 WORKDIR /app
 
+# Instalar dependencias de compilación
+RUN apk add --no-cache python3 make g++
+
 # Copiar package.json y package-lock.json
 COPY package*.json ./
 
-# Instalar solo las dependencias de producción
-RUN npm ci --only=production
+# Instalar todas las dependencias
+RUN npm install
 
-# Copiar los archivos compilados desde la etapa de construcción
-COPY --from=builder /app/dist ./dist
+# Copiar el resto de los archivos
+COPY . .
+
+# Compilar TypeScript
+RUN npm run build
 
 # Exponer puerto
 EXPOSE 4000
 
-# Comando para iniciar la aplicación
-CMD ["npm", "start"]
+# Comando para iniciar la aplicación en modo desarrollo
+CMD ["npm", "run", "dev"]

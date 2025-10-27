@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { useAuthStore } from '../stores/auth';
 import { Course, User } from '../types';
 
 /// <reference types="vite/client" />
@@ -8,9 +7,9 @@ const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
 });
 
-// Add auth token to requests
+// Configurar el interceptor para usar el token del localStorage directamente
 api.interceptors.request.use((config) => {
-  const token = useAuthStore.getState().token;
+  const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }

@@ -1,34 +1,9 @@
 /// <reference types="vite/client" />
 import { useQuery } from '@tanstack/react-query';
 import { coursesApi } from '../services/api';
-import {
-  Box,
-  Card,
-  CardContent,
-  CardMedia,
-  Grid,
-  Typography,
-  Chip,
-  Button,
-} from '@mui/material';
 import { Link } from 'react-router-dom';
-
-type CourseCategory = 'fullstack' | 'apis' | 'cloud' | 'data';
-
-interface Course {
-  _id: string;
-  title: string;
-  description: string;
-  category: CourseCategory;
-  thumbnail: string;
-}
-
-const categoryColors = {
-  fullstack: 'primary',
-  apis: 'secondary',
-  cloud: 'info',
-  data: 'success',
-} as const;
+import { Course } from '../types';
+import './Courses.css';
 
 const Courses = () => {
   const { data: courses, isLoading } = useQuery<Course[]>(['courses'], () =>
@@ -36,62 +11,53 @@ const Courses = () => {
   );
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div className="loading">Cargando cursos...</div>;
+  }
+
+  // Normalize API response to ensure we have an array to map
+  const courseList: Course[] = Array.isArray(courses)
+    ? courses
+    : (courses && (courses as any).data && Array.isArray((courses as any).data))
+    ? (courses as any).data
+    : [];
+
+  if (!Array.isArray(courses)) {
+    // eslint-disable-next-line no-console
+    console.warn('[Courses] unexpected courses payload', courses);
   }
 
   return (
-    <Box sx={{ py: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Cursos Disponibles
-      </Typography>
-      <Grid container spacing={3}>
-        {courses?.map((course: Course) => (
-          <Grid item xs={12} sm={6} md={4} key={course._id}>
-            <Card>
-              <CardMedia
-                component="img"
-                height="140"
-                image={`${import.meta.env.VITE_MINIO_URL}/${course.thumbnail}`}
-                alt={course.title}
-              />
-              <CardContent>
-                <Typography gutterBottom variant="h6">
-                  {course.title}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mb: 2 }}
+    <div className="courses-container">
+      <h1 className="courses-title">Cursos Disponibles</h1>
+      <div className="courses-grid">
+        {courseList.map((course: Course) => (
+          <div className="course-card" key={course.id}>
+            <img 
+              className="course-image"
+              src={`${import.meta.env.VITE_MINIO_URL}/${course.imageUrl}`}
+              alt={course.title}
+            />
+            <div className="course-content">
+              <h2 className="course-title">{course.title}</h2>
+              <p className="course-description">
+                {course.description}
+              </p>
+              <div className="course-footer">
+                <span className={`category-chip ${course.module}`}>
+                  {course.module}
+                </span>
+                <Link 
+                  to={`/courses/${course.id}`}
+                  className="view-course-button"
                 >
-                  {course.description}
-                </Typography>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}
-                >
-                  <Chip
-                    label={course.category}
-                    color={categoryColors[course.category]}
-                    size="small"
-                  />
-                  <Button
-                    component={Link}
-                    to={`/courses/${course._id}`}
-                    variant="contained"
-                    size="small"
-                  >
-                    Ver Curso
-                  </Button>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+                  Ver Curso
+                </Link>
+              </div>
+            </div>
+          </div>
         ))}
-      </Grid>
-    </Box>
+      </div>
+    </div>
   );
 };
 

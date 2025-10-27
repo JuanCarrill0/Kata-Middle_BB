@@ -3,12 +3,7 @@ import { useAuthStore } from '../stores/auth';
 
 const PrivateRoute = () => {
   const token = useAuthStore((state) => state.token);
-
-  if (!token) {
-    return <Navigate to="/login" />;
-  }
-
-  return <Outlet />;
+  return token ? <Outlet /> : <Navigate to="/login" replace />;
 };
 
 export default PrivateRoute;

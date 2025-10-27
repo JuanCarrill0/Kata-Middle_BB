@@ -1,22 +1,10 @@
-import { Box, Typography } from '@mui/material';
+import './NotFound.css';
 
 export default function NotFound() {
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100vh',
-      }}
-    >
-      <Typography variant="h1" component="h1">
-        404
-      </Typography>
-      <Typography variant="h5" component="h2">
-        Página no encontrada
-      </Typography>
-    </Box>
+    <div className="not-found-container">
+      <h1 className="not-found-title">404</h1>
+      <h2 className="not-found-subtitle">Página no encontrada</h2>
+    </div>
   );
 }

@@ -1,9 +1,8 @@
-# Etapa de construcción
-FROM node:18-alpine as build
+FROM node:18-alpine
 
 WORKDIR /app
 
-# Copiar archivos de configuración
+# Copiar archivos de configuración primero para aprovechar la caché de capas
 COPY package*.json ./
 COPY tsconfig*.json ./
 COPY vite.config.ts ./
@@ -11,26 +10,17 @@ COPY vite.config.ts ./
 # Instalar dependencias
 RUN npm install
 
-# Copiar código fuente
-COPY src/ ./src/
-COPY index.html ./
+# Limpiar caché de Vite si existe
+RUN rm -rf node_modules/.vite
 
-# Construir la aplicación
-RUN npm run build
+# Copiar el resto del código
+COPY . .
 
-# Etapa de producción
-FROM node:18-alpine
+# Crear directorio .vite con permisos correctos
+RUN mkdir -p node_modules/.vite && chmod 777 node_modules/.vite
 
-WORKDIR /app
-
-# Instalar serve para servir la aplicación
-RUN npm install -g serve
-
-# Copiar archivos de construcción
-COPY --from=build /app/dist /app/dist
-
-# Exponer puerto
+# Exponer el puerto que usa Vite
 EXPOSE 5173
 
-# Comando para iniciar la aplicación
-CMD ["serve", "-s", "dist", "-l", "5173", "--single"]
+# Comando para iniciar el servidor de desarrollo de Vite
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
