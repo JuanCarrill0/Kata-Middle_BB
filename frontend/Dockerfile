@@ -1,27 +1,27 @@
-FROM node:18-alpine
+FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Copiar archivos de configuración primero para aprovechar la caché de capas
 COPY package*.json ./
-COPY tsconfig*.json ./
-COPY vite.config.ts ./
-
-# Configurar npm para ignorar errores de SSL
-RUN npm config set strict-ssl false
-
-# Instalar dependencias
 RUN npm ci
 
-# Copiar el resto del código
 COPY . .
+RUN npm run build
 
-# Asegurar permisos y directorios necesarios
-RUN mkdir -p node_modules/.vite && \
-    chmod 777 node_modules/.vite
+FROM node:18-alpine AS production
 
-# Exponer el puerto que usa Vite
-EXPOSE 5173
+WORKDIR /app
 
-# Comando para iniciar el servidor de desarrollo de Vite
-CMD ["npm", "run", "dev"]
+# Copiar solo lo necesario
+COPY package*.json ./
+RUN npm ci --only=production
+
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/package.json ./
+
+# Instalar servidor estático
+RUN npm install -g serve
+
+EXPOSE 3000
+
+CMD ["serve", "-s", "dist", "-l", "3000"]
