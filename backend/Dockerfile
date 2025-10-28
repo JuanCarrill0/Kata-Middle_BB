@@ -5,14 +5,15 @@ WORKDIR /app
 # Instalar dependencias de compilación
 RUN apk add --no-cache python3 make g++
 
-# Copiar package.json y package-lock.json
-COPY package*.json ./
+# Copiar solo package.json y package-lock.json desde la carpeta backend
+# (esto permite que el contexto de build sea la raíz del repo)
+COPY backend/package*.json ./
 
-# Instalar todas las dependencias
+# Instalar dependencias
 RUN npm install
 
-# Copiar el resto de los archivos
-COPY . .
+# Copiar el resto del código del backend
+COPY backend .
 
 # Compilar TypeScript
 RUN npm run build
@@ -20,5 +21,5 @@ RUN npm run build
 # Exponer puerto
 EXPOSE 4000
 
-# Comando para iniciar la aplicación en modo desarrollo
-CMD ["npm", "run", "dev"]
+# Ejecutar la versión compilada en producción
+CMD ["node", "dist/index.js"]
