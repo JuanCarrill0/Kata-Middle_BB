@@ -5,7 +5,7 @@ import { upload } from '../middleware/upload';
 
 const router = Router();
 
-// Get all badges
+// Obtener todas las insignias
 router.get('/', async (req, res) => {
   try {
     const badges = await Badge.find().populate('course', 'title');
@@ -15,11 +15,11 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Create badge (admin only)
+// crear una nueva insignia (solo admin)
 router.post('/', auth, upload.single('image'), async (req, res) => {
   try {
     if (req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Not authorized' });
+      return res.status(403).json({ message: 'No autorizado' });
     }
 
     const badge = await Badge.create({

@@ -19,18 +19,18 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Error handling middleware
+// Error manejando middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error(err.stack);
-  res.status(500).json({ message: 'Something went wrong!' });
+  res.status(500).json({ message: 'Algo salió mal!' });
 });
 
-// Health check endpoint
+// verificación de salud
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
-// Routes
+// Rutas
 app.use('/api/auth', authRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/badges', badgeRoutes);
@@ -39,7 +39,7 @@ app.use('/api/files', fileRoutes);
 app.use('/api/history', historyRoutes);
 app.use('/api/modules', moduleRoutes);
 
-// Connect to MongoDB
+// connexion a la base de datos y arranque del servidor
 const startServer = async () => {
   try {
     const raw = process.env.MONGODB_URI;
@@ -47,7 +47,7 @@ const startServer = async () => {
       throw new Error('MONGODB_URI not set');
     }
 
-    // Ensure default DB is 'training-portal' when not specified explicitly
+    // asegurar que la base de datos usada es 'training-portal'
     let mongoUri = raw;
     if (!raw.includes('/training-portal')) {
       const qIdx = raw.indexOf('?');

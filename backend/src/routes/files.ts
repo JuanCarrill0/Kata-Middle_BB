@@ -4,19 +4,18 @@ import { ObjectId } from 'mongodb';
 
 const router = Router();
 
-// Serve files stored in GridFS by id
+// Obtener un archivo por ID
 router.get('/:id', async (req, res) => {
   try {
     const db = mongoose.connection.db;
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { GridFSBucket, ObjectId: ObjId } = require('mongodb');
     const bucket = new GridFSBucket(db, { bucketName: 'uploads' });
 
     const fileId = new ObjId(req.params.id);
-    // Try to find file info
+    // Tratar el caso en que el archivo no existe
     const files = await bucket.find({ _id: fileId }).toArray();
     if (!files || files.length === 0) {
-      return res.status(404).json({ message: 'File not found' });
+      return res.status(404).json({ message: 'Archivo no encontrado' });
     }
 
     const file = files[0];
@@ -25,11 +24,11 @@ router.get('/:id', async (req, res) => {
 
     const downloadStream = bucket.openDownloadStream(fileId);
     downloadStream.on('error', (err: any) => {
-      res.status(500).json({ message: 'Error streaming file' });
+      res.status(500).json({ message: 'Error transmitiendo archivo' });
     });
     downloadStream.pipe(res);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching file' });
+    res.status(500).json({ message: 'Error obteniendo archivo' });
   }
 });
 

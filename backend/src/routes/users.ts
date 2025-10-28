@@ -6,7 +6,7 @@ import { upload } from '../middleware/upload';
 
 const router = Router();
 
-// Get user profile
+// obtener perfil de usuario
 router.get('/profile', auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id)
@@ -14,7 +14,7 @@ router.get('/profile', auth, async (req, res) => {
       .populate('badges');
     
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: 'Usuario no encontrado' });
     }
 
     res.json({
@@ -24,14 +24,14 @@ router.get('/profile', auth, async (req, res) => {
       role: user.role,
       completedCourses: user.completedCourses,
       badges: user.badges,
-  subscribedModules: (user.subscribedModules || []).map((m: any) => m.toString()),
+      subscribedModules: (user.subscribedModules || []).map((m: any) => m.toString()),
       notifications: (user.notifications || []).map(n => ({
-        message: n.message,
-        link: n.link,
-        module: n.module,
-        course: n.course,
-        read: n.read,
-        createdAt: n.createdAt,
+      message: n.message,
+      link: n.link,
+      module: n.module,
+      course: n.course,
+      read: n.read,
+      createdAt: n.createdAt,
       })),
       progress: (user.progress || []).map((p: any) => ({
         courseId: p.courseId.toString(),
@@ -39,11 +39,11 @@ router.get('/profile', auth, async (req, res) => {
       })),
     });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching profile' });
+    res.status(500).json({ message: 'Error obteniendo perfil' });
   }
 });
 
-// Update user profile
+// actualizar perfil de usuario
 router.put('/profile', auth, upload.single('avatar'), async (req, res) => {
   try {
     const updates = { ...req.body };
@@ -58,7 +58,7 @@ router.put('/profile', auth, upload.single('avatar'), async (req, res) => {
     );
 
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: 'Usuario no encontrado' });
     }
 
     res.json({
@@ -68,27 +68,27 @@ router.put('/profile', auth, upload.single('avatar'), async (req, res) => {
       role: user.role,
     });
   } catch (error) {
-    res.status(500).json({ message: 'Error updating profile' });
+    res.status(500).json({ message: 'Error actualizando perfil' });
   }
 });
 
-// Subscribe to a module (category)
+// subscribir a un módulo
 router.post('/subscribe', auth, async (req, res) => {
   try {
     const { module } = req.body;
-    if (!module) return res.status(400).json({ message: 'module is required' });
+    if (!module) return res.status(400).json({ message: 'El módulo es requerido' });
 
     const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (!user) return res.status(404).json({ message: 'Usuario no encontrado' });
 
     user.subscribedModules = user.subscribedModules || [];
-    // Normalize comparisons by using string form
+    // Normalizar comparación para ObjectId y strings
     const already = user.subscribedModules.some((m: any) => m && m.toString() === module);
     if (!already) {
       try {
         user.subscribedModules.push((new mongoose.Types.ObjectId(module)) as any);
       } catch (e) {
-        // if invalid ObjectId, still push raw value
+        // si el objeto no es un ObjectId válido, agregar como string
         user.subscribedModules.push(module as any);
       }
       await user.save();
@@ -96,20 +96,19 @@ router.post('/subscribe', auth, async (req, res) => {
 
     res.json({ message: 'Subscribed', subscribedModules: user.subscribedModules });
   } catch (error) {
-    res.status(500).json({ message: 'Error subscribing to module' });
+    res.status(500).json({ message: 'error subscribiendose al modulo' });
   }
 });
 
-// Unsubscribe from a module
+// desubscribir de un módulo
 router.post('/unsubscribe', auth, async (req, res) => {
   try {
     const { module } = req.body;
-    if (!module) return res.status(400).json({ message: 'module is required' });
+    if (!module) return res.status(400).json({ message: 'El módulo es requerido' });
 
     const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (!user) return res.status(404).json({ message: 'Usuario no encontrado' });
 
-  // Remove by string comparison to support ObjectId entries
   user.subscribedModules = (user.subscribedModules || []).filter((m: any) => m.toString() !== module);
   await user.save();
 
@@ -119,31 +118,31 @@ router.post('/unsubscribe', auth, async (req, res) => {
   }
 });
 
-// Get notifications
+// obtener notificaciones del usuario
 router.get('/notifications', auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('notifications');
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (!user) return res.status(404).json({ message: 'Usuario no encontrado' });
     res.json((user.notifications || []).sort((a: any, b: any) => (b.createdAt?.getTime?.() || 0) - (a.createdAt?.getTime?.() || 0)));
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching notifications' });
+    res.status(500).json({ message: 'Error obteniendo notificaciones' });
   }
 });
 
-// Mark a notification as read
+// Marcar una notificación como leída
 router.post('/notifications/:id/read', auth, async (req, res) => {
   try {
     const { id } = req.params;
     const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (!user) return res.status(404).json({ message: 'Usuario no encontrado' });
 
     const notif = (user.notifications || []).find((n: any) => (n as any)._id?.toString() === id);
     if (notif) notif.read = true;
 
     await user.save();
-    res.json({ message: 'Marked read' });
+    res.json({ message: 'Marcado como leído' });
   } catch (error) {
-    res.status(500).json({ message: 'Error marking notification' });
+    res.status(500).json({ message: 'Error marcando notificación como leída' });
   }
 });
 

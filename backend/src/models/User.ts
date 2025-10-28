@@ -11,9 +11,7 @@ export interface IUser extends Document {
   }[];
   completedCourses: Schema.Types.ObjectId[];
   badges: Schema.Types.ObjectId[];
-  // Modules (categories) the user is subscribed to for in-app notifications
   subscribedModules?: string[];
-  // In-app notifications
   notifications?: {
     message: string;
     link?: string;
@@ -74,7 +72,7 @@ const userSchema = new Schema<IUser>(
       read: { type: Boolean, default: false },
       createdAt: { type: Date, default: Date.now },
     }],
-    // (course progress stored in `progress` above)
+    // progreso del curso almacenado como un array de objetos con courseId y capítulos completados
   },
   {
     timestamps: true,

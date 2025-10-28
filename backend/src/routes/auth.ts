@@ -13,12 +13,12 @@ const signOptions: SignOptions = {
 
 const router = Router();
 
-// Register
+// Registro de usuarios
 router.post('/register', async (req, res) => {
   try {
     const { email, password, name } = req.body;
 
-    // Check if user exists
+    // Verificar si el usuario ya existe
     const userExists = await User.findOne({ email });
     if (userExists) {
       return res.status(400).json({ message: 'Email already registered' });
@@ -27,14 +27,14 @@ router.post('/register', async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
+    // Crear usuario
     const user = await User.create({
       email,
       password: hashedPassword,
       name,
     });
 
-    // Generate token
+    // Generar token
     const token = jwt.sign(
       { userId: user._id },
       JWT_SECRET,
@@ -60,19 +60,19 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Find user
+    // Encontrar usuario
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Check password
+    // Verificar contraseña
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Generate token
+    // Generar token
     const token = jwt.sign(
       { userId: user._id },
       JWT_SECRET,
