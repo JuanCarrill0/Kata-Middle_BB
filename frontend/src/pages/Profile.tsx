@@ -24,7 +24,7 @@ export default function Profile() {
 
   const { data: history } = useQuery<ApiHistory>(['history'], async () => {
     const response = await historyApi.getUserHistory();
-    return response.data as ApiHistory;
+    return response.data as unknown as ApiHistory;
   }, {
     onError: () => {
       notifications.error('Error al cargar el historial');
