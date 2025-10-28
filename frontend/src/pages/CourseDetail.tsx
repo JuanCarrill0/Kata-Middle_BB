@@ -36,6 +36,7 @@ export default function CourseDetail() {
   // Local UI state to avoid requiring multiple clicks and to provide optimistic updates
   const [loadingChapters, setLoadingChapters] = useState<Record<string, boolean>>({});
   const [optimisticCompleted, setOptimisticCompleted] = useState<Record<string, boolean>>({});
+  const [preview, setPreview] = useState<{ url: string; type: string; title?: string } | null>(null);
   // Ref for synchronous in-flight checks to avoid race where state hasn't updated yet
   const inFlightRef = useRef<Record<string, boolean>>({});
 
@@ -312,7 +313,13 @@ export default function CourseDetail() {
                       return (
                         <div className="resource-card" key={idx2}>
                           <h4 className="resource-title">Material de apoyo</h4>
-                          <a href={resourceUrl} target="_blank" rel="noopener noreferrer" className="resource-link">Ver {c.type}</a>
+                          <button
+                            type="button"
+                            className="resource-link"
+                            onClick={() => setPreview({ url: resourceUrl, type: c.type, title: chapter.title })}
+                          >
+                            Ver {c.type}
+                          </button>
                         </div>
                       );
                     })}
@@ -331,6 +338,27 @@ export default function CourseDetail() {
           })}
         </div>
       </div>
+      {/* Preview modal/overlay for resources */}
+      {preview && (
+        <div className="preview-overlay" onClick={() => setPreview(null)}>
+          <div className="preview-content" onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0 }}>{preview.title || 'Vista previa'}</h3>
+              <button onClick={() => setPreview(null)} style={{ marginLeft: 12 }}>Cerrar</button>
+            </div>
+            <div style={{ marginTop: 12 }}>
+              {preview.type === 'video' ? (
+                <video className="preview-video" controls>
+                  <source src={preview.url} type="video/mp4" />
+                  Tu navegador no soporta video.
+                </video>
+              ) : (
+                <iframe className="preview-iframe" src={preview.url} title={preview.title || 'resource-preview'} />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
