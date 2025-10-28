@@ -2,7 +2,7 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Copiar archivos de configuración primero para mejor cache
+# Copiar archivos de configuración
 COPY package*.json ./
 COPY vite.config.ts ./
 COPY tsconfig*.json ./
@@ -15,7 +15,7 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-# Etapa de producción con Vite Preview
+# Etapa de producción
 FROM node:18-alpine
 
 WORKDIR /app
@@ -24,12 +24,12 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --only=production
 
-# Copiar build del stage anterior
+# Copiar build
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/package.json ./
+COPY --from=builder /app/vite.config.ts ./
 
-# Exponer puerto
+# Exponer puerto de Vite Preview
 EXPOSE 4173
 
-# Usar Vite Preview para servir la aplicación
+# Usar Vite Preview con configuración de hosts permitidos
 CMD ["npx", "vite", "preview", "--host", "0.0.0.0", "--port", "4173"]

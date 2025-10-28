@@ -16,11 +16,22 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    host: true, // Permite acceso desde cualquier host
     proxy: {
       '/api': {
         target: 'http://localhost:4000',
         changeOrigin: true,
       },
     },
+  },
+  preview: {
+    port: 4173,
+    host: true, // Permite acceso externo
+    allowedHosts: [
+      'kata-middle-bb-1.onrender.com',
+      'localhost',
+      '127.0.0.1'
+      // Agrega aquí otros hosts si es necesario
+    ]
   },
 });
