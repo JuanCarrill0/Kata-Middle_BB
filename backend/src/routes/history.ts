@@ -39,6 +39,44 @@ router.get('/my-history', auth, async (req, res) => {
     res.status(500).json({ message: 'Error al obtener el historial' });
   }
 });
+const fetchMyHistory = async (req: any, res: any) => {
+  try {
+    const history = await History.find({ user: req.user.id })
+      .populate('course', 'title description category')
+      .sort({ completedAt: -1 });
+
+    // Agrupar por categoría
+    const byCategory: { [key: string]: any[] } = {};
+    history.forEach((entry: any) => {
+      if (!byCategory[entry.category]) {
+        byCategory[entry.category] = [];
+      }
+      byCategory[entry.category].push(entry);
+    });
+
+    // Calcular estadísticas
+    const stats = {
+      totalCourses: history.length,
+      totalChapters: history.reduce((acc: number, curr: any) => acc + curr.completedChapters.length, 0),
+      totalTime: history.reduce((acc: number, curr: any) => acc + (curr.totalTime || 0), 0),
+      byCategory: Object.keys(byCategory).map(category => ({
+        category,
+        count: byCategory[category].length,
+        lastCompleted: byCategory[category][0]?.completedAt,
+      })),
+    };
+
+    res.json({ history, stats });
+  } catch (error) {
+    console.error('Error fetching history:', error);
+    res.status(500).json({ message: 'Error al obtener el historial' });
+  }
+};
+
+router.get('/my-history', auth, fetchMyHistory);
+
+// Alias compatible: /me
+router.get('/me', auth, fetchMyHistory);
 
 // Obtener historial detallado de un curso específico
 router.get('/course/:courseId', auth, async (req, res) => {

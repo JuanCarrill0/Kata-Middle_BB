@@ -1,6 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/auth';
+import { usersApi } from '../services/api';
+import './Navigation.css';
+import './Navigation.css';
 import './Navigation.css';
 
 const pages = [
@@ -16,6 +19,49 @@ function Navigation() {
   // Use separate selectors to avoid creating a new object each render
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+  const token = useAuthStore((s) => s.token);
+
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+
+  useEffect(() => {
+    if (!user) {
+      setNotifications([]);
+      return;
+    }
+
+    let mounted = true;
+    usersApi.getNotifications().then((res) => {
+      if (!mounted) return;
+      setNotifications(res.data || []);
+    }).catch(() => {
+      setNotifications([]);
+    });
+
+    return () => { mounted = false; };
+  }, [user, token]);
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  const handleToggleNotifs = () => {
+    setIsNotifOpen(!isNotifOpen);
+  };
+
+  const handleOpenNotification = async (n: any) => {
+    try {
+      if (!n.read && n._id) {
+        await usersApi.markNotificationRead(n._id);
+      }
+    } catch (e) {
+      // ignore
+    }
+    // navigate to link if present
+    if (n.link) {
+      window.location.href = n.link;
+    }
+    // optimistically mark read in UI
+    setNotifications(prev => prev.map(x => x._id === n._id ? { ...x, read: true } : x));
+  };
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -65,6 +111,27 @@ function Navigation() {
           </div>
 
           <div className="nav-user">
+            <div className="nav-notifications">
+              <button className="nav-notif-button" onClick={handleToggleNotifs} title="Notificaciones">
+                🔔
+                {unreadCount > 0 && <span className="notif-badge">{unreadCount}</span>}
+              </button>
+              <div className={`notif-dropdown ${isNotifOpen ? 'open' : ''}`}>
+                {notifications.length === 0 && <div className="notif-empty">No hay notificaciones</div>}
+                {notifications.map(n => (
+                  <div key={n._id || `${n.message}-${n.createdAt}`} className={`notif-item ${n.read ? 'read' : 'unread'}`} onClick={() => handleOpenNotification(n)}>
+                    <div className="notif-message">{n.message}</div>
+                    {n.link && <div className="notif-link">Ver</div>}
+                    <div className="notif-time">{n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}</div>
+                  </div>
+                ))}
+                {notifications.length > 0 && (
+                  <div className="notif-footer">
+                    <Link to="/profile" onClick={() => setIsNotifOpen(false)}>Ver todas</Link>
+                  </div>
+                )}
+              </div>
+            </div>
             <button
               ref={avatarRef}
               className="nav-avatar"

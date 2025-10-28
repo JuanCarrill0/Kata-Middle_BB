@@ -46,9 +46,20 @@ export const coursesApi = {
     api.post<{ message: string, user: User }>(`/api/courses/${courseId}/chapters/${chapterId}/complete`),
 };
 
+export const modulesApi = {
+  getAll: () => api.get<any[]>('/api/modules'),
+  getById: (id: string) => api.get<any>(`/api/modules/${id}`),
+  create: (data: { name: string; description?: string; slug?: string }) => api.post('/api/modules', data),
+  getCourses: (id: string) => api.get<Course[]>(`/api/modules/${id}/courses`),
+};
+
 export const usersApi = {
   getProfile: () => api.get<User>('/api/users/profile'),
   updateProfile: (data: FormData) => api.put<User>('/api/users/profile', data),
+  subscribe: (module: string) => api.post('/api/users/subscribe', { module }),
+  unsubscribe: (module: string) => api.post('/api/users/unsubscribe', { module }),
+  getNotifications: () => api.get<any[]>('/api/users/notifications'),
+  markNotificationRead: (id: string) => api.post(`/api/users/notifications/${id}/read`),
 };
 
 export const historyApi = {

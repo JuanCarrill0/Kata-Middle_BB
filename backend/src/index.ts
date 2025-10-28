@@ -8,6 +8,8 @@ import courseRoutes from './routes/courses';
 import badgeRoutes from './routes/badges';
 import userRoutes from './routes/users';
 import fileRoutes from './routes/files';
+import historyRoutes from './routes/history';
+import moduleRoutes from './routes/modules';
 
 dotenv.config();
 
@@ -34,12 +36,30 @@ app.use('/api/courses', courseRoutes);
 app.use('/api/badges', badgeRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/files', fileRoutes);
+app.use('/api/history', historyRoutes);
+app.use('/api/modules', moduleRoutes);
 
 // Connect to MongoDB
 const startServer = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI!);
-    console.log('Connected to MongoDB');
+    const raw = process.env.MONGODB_URI;
+    if (!raw) {
+      throw new Error('MONGODB_URI not set');
+    }
+
+    // Ensure default DB is 'training-portal' when not specified explicitly
+    let mongoUri = raw;
+    if (!raw.includes('/training-portal')) {
+      const qIdx = raw.indexOf('?');
+      if (qIdx === -1) {
+        mongoUri = raw.replace(/\/*$/, '') + '/training-portal';
+      } else {
+        mongoUri = raw.slice(0, qIdx).replace(/\/*$/, '') + '/training-portal' + raw.slice(qIdx);
+      }
+    }
+
+    await mongoose.connect(mongoUri);
+    console.log('Connected to MongoDB (db: training-portal)');
 
     const port = process.env.PORT || 4000;
     app.listen(port, () => {

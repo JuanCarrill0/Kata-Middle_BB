@@ -30,11 +30,20 @@ const Courses = () => {
     <div className="courses-container">
       <h1 className="courses-title">Cursos Disponibles</h1>
       <div className="courses-grid">
-        {courseList.map((course: Course) => (
+        {courseList.map((course: Course) => {
+          // Resolve image URL with fallback to a generic placeholder in /public
+          const resolveImage = (img?: string) => {
+            if (!img) return `${import.meta.env.BASE_URL}default-badge.png`;
+            // If it's already an absolute URL, return as-is
+            if (/^https?:\/\//i.test(img)) return img;
+            return `${import.meta.env.VITE_MINIO_URL}/${img}`;
+          };
+
+          return (
           <div className="course-card" key={course.id}>
-            <img 
+            <img
               className="course-image"
-              src={`${import.meta.env.VITE_MINIO_URL}/${course.imageUrl}`}
+              src={resolveImage(course.imageUrl)}
               alt={course.title}
             />
             <div className="course-content">
@@ -55,7 +64,8 @@ const Courses = () => {
               </div>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

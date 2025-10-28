@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { coursesApi } from '../services/api';
+import { coursesApi, modulesApi } from '../services/api';
 import { notifications } from '../services/notifications';
 import { Course } from '../types';
 import { useAuthStore } from '../stores/auth';
@@ -35,9 +35,43 @@ export default function ModuleCourses() {
     }
   });
 
-  const courses = Array.isArray(coursesResponse?.data) 
-    ? coursesResponse.data.filter((course: Course) => course.category === moduleId)
-    : [];
+  const isLegacy = !!moduleNames[moduleId as keyof typeof moduleNames];
+
+  // If legacy slug (fullstack/apis/...), continue using the global courses list and filter by category.
+  // Otherwise, fetch module info and module-specific courses from the API.
+  const { data: moduleData } = useQuery(
+    ['module', moduleId],
+    () => modulesApi.getById(moduleId as string).then(r => r.data),
+    {
+      enabled: !isLegacy && !!moduleId,
+      onError: () => {
+        // handled later by rendering "Módulo no encontrado"
+      }
+    }
+  );
+
+  const { data: moduleCoursesData } = useQuery(
+    ['moduleCourses', moduleId],
+    () => modulesApi.getCourses(moduleId as string).then(r => r.data),
+    { enabled: !isLegacy && !!moduleId }
+  );
+
+  const courses: Course[] = (() => {
+    if (isLegacy) {
+      return Array.isArray(coursesResponse?.data)
+        ? coursesResponse.data.filter((course: Course) => course.category === moduleId)
+        : [];
+    }
+
+    // Non-legacy: use moduleCoursesData (from /api/modules/:id/courses)
+    return Array.isArray(moduleCoursesData) ? moduleCoursesData : [];
+  })();
+
+  const resolveImage = (img?: string) => {
+    if (!img) return `${import.meta.env.BASE_URL}default-badge.png`;
+    if (/^https?:\/\//i.test(img)) return img;
+    return `${import.meta.env.VITE_MINIO_URL}/${img}`;
+  };
 
   const getProgress = (courseId: string) => {
     if (!user?.progress) return 0;
@@ -47,21 +81,25 @@ export default function ModuleCourses() {
     return (courseProgress.completedChapters.length / (course?.chapters?.length ?? 1)) * 100;
   };
 
-  if (!moduleId || !moduleNames[moduleId as keyof typeof moduleNames]) {
+  // Determine module title and missing module handling
+  let moduleTitle: string | null = null;
+  if (isLegacy) {
+    moduleTitle = moduleNames[moduleId as keyof typeof moduleNames];
+  } else if (moduleData) {
+    moduleTitle = moduleData.name;
+  }
+
+  if (!moduleId || !moduleTitle) {
     return (
       <div className="module-container">
-        <h1 className="module-title">
-          Módulo no encontrado
-        </h1>
+        <h1 className="module-title">Módulo no encontrado</h1>
       </div>
     );
   }
 
   return (
     <div className="module-container">
-      <h1 className="module-title">
-        {moduleNames[moduleId as keyof typeof moduleNames]}
-      </h1>
+      <h1 className="module-title">{moduleTitle}</h1>
 
       {user && (user.role === 'admin' || user.role === 'teacher') && (
         <div style={{ marginBottom: 12 }}>
@@ -77,13 +115,11 @@ export default function ModuleCourses() {
             <div key={course.id} className="course-card">
               <div className="course-card-clickable" onClick={() => navigate(`/courses/${course.id}`)}>
               <div className="course-content">
-                {course.imageUrl && (
-                  <img
-                    src={course.imageUrl}
-                    alt={course.title}
-                    className="course-image"
-                  />
-                )}
+                <img
+                  src={resolveImage(course.imageUrl)}
+                  alt={course.title}
+                  className="course-image"
+                />
                 <h2 className="course-title">
                   {course.title}
                 </h2>

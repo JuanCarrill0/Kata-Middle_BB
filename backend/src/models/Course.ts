@@ -3,7 +3,10 @@ import { Schema, model, Document } from 'mongoose';
 export interface ICourse extends Document {
   title: string;
   description: string;
-  category: 'fullstack' | 'apis' | 'cloud' | 'data';
+  // module will reference the new Module model (replaces previous category string)
+  module: Schema.Types.ObjectId;
+  // legacy category string (optional)
+  category?: 'fullstack' | 'apis' | 'cloud' | 'data';
   chapters: {
     title: string;
     description: string;
@@ -29,10 +32,12 @@ const courseSchema = new Schema<ICourse>(
       type: String,
       required: true,
     },
+    // Keep `category` as optional legacy field for migration; prefer `module` ObjectId.
+    module: { type: Schema.Types.ObjectId, ref: 'Module', required: false },
     category: {
       type: String,
       enum: ['fullstack', 'apis', 'cloud', 'data'],
-      required: true,
+      required: false,
     },
     chapters: [{
       title: {

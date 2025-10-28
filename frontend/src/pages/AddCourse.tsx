@@ -25,7 +25,13 @@ export default function AddCourse() {
     const form = new FormData();
     form.append('title', title);
     form.append('description', description);
-    form.append('category', moduleId || 'fullstack');
+    // If we're creating the course from within a module page, send the module id.
+    // Otherwise send a legacy category string for backward compatibility.
+    if (moduleId) {
+      form.append('module', moduleId);
+    } else {
+      form.append('category', 'fullstack');
+    }
     if (thumbnail) form.append('thumbnail', thumbnail);
 
     try {

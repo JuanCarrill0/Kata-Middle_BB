@@ -11,7 +11,9 @@ export interface Course {
   id: string;
   title: string;
   description: string;
-  category: 'fullstack' | 'apis' | 'cloud' | 'data';
+  // module may be returned as an Object (populated) or just an id string
+  module?: string | { id: string; name: string };
+  category?: 'fullstack' | 'apis' | 'cloud' | 'data';
   chapters: Chapter[];
   imageUrl?: string;
   createdAt: Date;
@@ -39,6 +41,18 @@ export interface User {
   progress: {
     courseId: string;
     completedChapters: string[];
+  }[];
+  // Subscribed module names (category strings)
+  subscribedModules?: string[];
+  // In-app notifications
+  notifications?: {
+    _id?: string;
+    message: string;
+    link?: string;
+    module?: string;
+    course?: string;
+    read?: boolean;
+    createdAt?: Date;
   }[];
   createdAt: Date;
   updatedAt: Date;

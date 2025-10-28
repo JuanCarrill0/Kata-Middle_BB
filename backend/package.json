@@ -6,6 +6,8 @@
   "scripts": {
     "start": "node dist/index.js",
     "dev": "ts-node-dev --respawn --transpile-only --poll src/index.ts",
+    "migrate:modules": "ts-node-dev --respawn --transpile-only src/scripts/migrate-modules.ts",
+    "seed:modules": "node ./scripts/seed-modules.js",
     "build": "tsc",
     "test": "jest"
   },
@@ -19,7 +21,7 @@
     "minio": "^7.1.3",
     "mongoose": "^7.5.0",
     "multer": "^2.0.2",
-    "nodemailer": "^6.9.4",
+    "nodemailer": "^6.10.1",
     "zod": "^3.22.2"
   },
   "devDependencies": {

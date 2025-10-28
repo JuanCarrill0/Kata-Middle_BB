@@ -5,16 +5,40 @@ import { Badge } from '../models/Badge';
 import { History } from '../models/History';
 import { auth } from '../middleware/auth';
 import { upload, uploadToMinio, minioClient } from '../middleware/upload';
+// Notifications will be stored in-app on User.notifications; no email sending here.
 import mongoose from 'mongoose';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { ObjectId, GridFSBucket } = require('mongodb');
 
 const router = Router();
 
-// Get all courses
-router.get('/', async (req, res) => {
+// Get all courses - now requires auth. Users must be subscribed to module to view courses.
+router.get('/', auth, async (req, res) => {
   try {
-    const courses = await Course.find()
+    // Teachers and admins can see all courses
+    if (req.user.role === 'admin' || req.user.role === 'teacher') {
+      const courses = await Course.find()
+        .populate('badge')
+        .populate('createdBy', 'name email');
+      return res.json(courses);
+    }
+
+    // Regular users: only courses whose module is in their subscribedModules
+    const user = await User.findById(req.user.id).select('subscribedModules').lean();
+    const subs = (user && (user as any).subscribedModules) || [];
+    if (!subs || subs.length === 0) return res.json([]);
+
+    // Normalize subscription ids to ObjectId when possible for the $in query
+    const subsIds = subs.map((s: any) => {
+      try {
+        if (typeof s === 'string' && /^[a-fA-F0-9]{24}$/.test(s)) return new mongoose.Types.ObjectId(s);
+        return s;
+      } catch (e) {
+        return s;
+      }
+    });
+
+    const courses = await Course.find({ module: { $in: subsIds } })
       .populate('badge')
       .populate('createdBy', 'name email');
     res.json(courses);
@@ -23,17 +47,43 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get course by ID
-router.get('/:id', async (req, res) => {
+// Get course by ID - requires auth and subscription for regular users
+router.get('/:id', auth, async (req, res) => {
   try {
     const course = await Course.findById(req.params.id)
       .populate('badge')
-      .populate('createdBy', 'name email');
+      .populate('createdBy', 'name email')
+      .populate('module');
     
     if (!course) {
       return res.status(404).json({ message: 'Course not found' });
     }
-    
+
+    if (req.user.role === 'admin' || req.user.role === 'teacher') {
+      return res.json(course);
+    }
+
+    // regular user: check subscription
+    const user = await User.findById(req.user.id).select('subscribedModules').lean();
+    const subs = (user && (user as any).subscribedModules) || [];
+    // Determine module id string robustly. If module is populated, use its _id.
+    let moduleId: string | null = null;
+    if ((course as any).module) {
+      const mod = (course as any).module;
+      if (typeof mod === 'object') {
+        moduleId = (mod._id ? mod._id.toString() : (mod.id ? mod.id.toString() : mod.toString()));
+      } else {
+        moduleId = mod.toString();
+      }
+    } else {
+      moduleId = (course as any).category || null;
+    }
+
+    if (!moduleId) return res.status(403).json({ message: 'Course not accessible' });
+
+    const allowed = subs.some((s: any) => s && s.toString() === moduleId);
+    if (!allowed) return res.status(403).json({ message: 'Not subscribed to this module' });
+
     res.json(course);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching course' });
@@ -47,13 +97,70 @@ router.post('/', auth, upload.single('thumbnail'), uploadToMinio, async (req, re
       return res.status(403).json({ message: 'Not authorized' });
     }
 
+    // Determine module: prefer explicit module id; if category string provided, try to find/create Module
+    let moduleId = req.body.module;
+    if (!moduleId && req.body.category) {
+      // lazy-require Module to avoid circular deps
+      // Accept either a module id or a category/name string.
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { Module } = require('../models/Module');
+      let m = null;
+      try {
+        // If category looks like an ObjectId, try to find by _id first
+        if (/^[a-fA-F0-9]{24}$/.test(req.body.category)) {
+          m = await Module.findById(req.body.category);
+        }
+      } catch (e) {
+        // ignore invalid id errors
+        m = null;
+      }
+
+      if (!m) {
+        // Fallback to find by name
+        m = await Module.findOne({ name: req.body.category });
+      }
+
+      if (!m) {
+        // If still not found, create using the provided string as name
+        m = await Module.create({ name: req.body.category, description: '' , createdBy: req.user.id});
+      }
+      moduleId = m._id;
+    }
+
     const course = await Course.create({
       ...req.body,
+      module: moduleId,
       thumbnail: req.file?.filename,
       createdBy: req.user.id,
     });
 
     res.status(201).json(course);
+
+    // Create in-app notifications for users subscribed to this course's module/category
+    (async () => {
+      try {
+        // determine module id to notify subscribers
+        const moduleIdToNotify = (course as any).module || null;
+        if (!moduleIdToNotify) return;
+
+        const recipients = await User.find({ subscribedModules: moduleIdToNotify }).select('_id');
+        if (!recipients || recipients.length === 0) return;
+        const appUrl = process.env.APP_URL || `http://localhost:5174`;
+        const courseUrl = `${appUrl}/courses/${(course as any)._id || (course as any).id}`;
+        const message = `Nuevo curso disponible: ${course.title}`;
+
+        // push notification object into each user's notifications array
+        await Promise.all(recipients.map((r: any) =>
+          User.updateOne(
+            { _id: r._id },
+            { $push: { notifications: { message, link: courseUrl, module: moduleIdToNotify, course: course._id, read: false, createdAt: new Date() } } }
+          ).exec()
+        ));
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error('[notify] error creating in-app notifications', e);
+      }
+    })();
   } catch (error) {
     res.status(500).json({ message: 'Error creating course' });
   }
@@ -115,12 +222,12 @@ router.post('/:id/chapters', auth, upload.fields([{ name: 'files', maxCount: 20 
 router.post('/:courseId/chapters/:chapterId/complete', auth, async (req, res) => {
   try {
     const { courseId, chapterId } = req.params;
-    const course = await Course.findById(courseId);
+  const course = await Course.findById(courseId).populate('module');
     if (!course) return res.status(404).json({ message: 'Course not found' });
 
-    // try to find chapter by subdoc id or fallback to _id string
-    const chapter = (course as any).chapters.id ? (course as any).chapters.id(chapterId) : undefined;
-    const chapterExists = chapter || (course as any).chapters.find((c: any) => (c as any)._id?.toString() === chapterId || (c as any).id === chapterId);
+  // try to find chapter by subdoc id or fallback to _id string
+  const chapterDoc = (course as any).chapters.id ? (course as any).chapters.id(chapterId) : undefined;
+  const chapterExists = chapterDoc || (course as any).chapters.find((c: any) => (c as any)._id?.toString() === chapterId || (c as any).id === chapterId);
     if (!chapterExists) return res.status(404).json({ message: 'Chapter not found' });
 
     // Update user progress
@@ -131,28 +238,30 @@ router.post('/:courseId/chapters/:chapterId/complete', auth, async (req, res) =>
     }
 
     // Find or create progress entry for this course
-    let courseProgress = user.progress.find(p => p.courseId.toString() === courseId);
+    let courseProgress: any = (user as any).progress.find((p: any) => p.courseId.toString() === courseId);
     if (!courseProgress) {
       courseProgress = {
         courseId: new mongoose.Types.ObjectId(courseId),
-        completedChapters: []
+        completedChapters: [] as string[],
       };
-      user.progress.push(courseProgress);
+      (user as any).progress.push(courseProgress);
     }
 
-    // Add chapter to completed chapters if not already completed
-    const chapterObjectId = new mongoose.Types.ObjectId(chapterId);
-    if (!courseProgress.completedChapters.includes(chapterObjectId)) {
-      courseProgress.completedChapters.push(chapterObjectId);
+    // Add chapterId (string) to completed chapters if not already present
+    courseProgress.completedChapters = courseProgress.completedChapters || [];
+    if (!courseProgress.completedChapters.includes(chapterId)) {
+      courseProgress.completedChapters.push(chapterId);
     }
 
     // Buscar o crear entrada en el historial
     let history = await History.findOne({ user: userId, course: course._id });
     if (!history) {
+      // store the module name in history.category for reporting; fall back to legacy category
+      const moduleName = (course as any).module?.name || (course as any).category || '';
       history = new History({
         user: userId,
         course: course._id,
-        category: course.category,
+        category: moduleName,
         completedChapters: []
       });
     }
@@ -163,14 +272,11 @@ router.post('/:courseId/chapters/:chapterId/complete', auth, async (req, res) =>
     );
     
     if (!chapterInHistory) {
-      const chapter = course.chapters.find(ch => 
-        (ch as any)._id.toString() === chapterId
-      );
-      
+      const foundChapter = course.chapters.find(ch => (ch as any)._id.toString() === chapterId);
       history.completedChapters.push({
-        chapterId: new mongoose.Types.ObjectId(chapterId),
+        chapterId: new mongoose.Types.ObjectId(chapterId) as any,
         completedAt: new Date(),
-        title: chapter?.title || 'Capítulo'
+        title: foundChapter?.title || 'Capítulo'
       });
     }
 
@@ -198,7 +304,7 @@ router.post('/:courseId/chapters/:chapterId/complete', auth, async (req, res) =>
         if (!hasEarned) {
           // Otorgar la insignia al usuario
           badge.earnedBy.push({
-            user: new mongoose.Types.ObjectId(userId),
+            user: new mongoose.Types.ObjectId(userId) as any,
             earnedAt: new Date()
           });
           await badge.save();

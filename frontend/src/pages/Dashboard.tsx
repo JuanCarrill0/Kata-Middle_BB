@@ -2,15 +2,14 @@ import { useAuthStore } from '../stores/auth';
 import ModuleCard from '../components/ModuleCard';
 import './Dashboard.css';
 import { useQuery } from '@tanstack/react-query';
-import { coursesApi } from '../services/api';
+import { coursesApi, modulesApi } from '../services/api';
 import { notifications } from '../services/notifications';
-import { Course } from '../types';
 import BadgeCard from '../components/BadgeCard';
 
 export default function Dashboard() {
   const user = useAuthStore((state) => state.user);
   
-  const { data: coursesResponse, isLoading } = useQuery({
+  const { data: coursesResponse } = useQuery({
     queryKey: ['courses'],
     queryFn: coursesApi.getAll,
     staleTime: 5 * 60 * 1000, // 5 minutos
@@ -20,38 +19,17 @@ export default function Dashboard() {
     }
   });
 
-  const courses = coursesResponse?.data;
-
-  const modules = [
-    {
-      title: 'Fullstack',
-      description: 'Desarrollo web completo: Frontend, Backend y más',
-      icon: '💻',
-      path: '/modules/fullstack',
-  coursesCount: courses?.filter((course: Course) => course.category === 'fullstack').length || 0
-    },
-    {
-      title: 'APIs e Integraciones',
-      description: 'DataPower, IBM Bus, Broker, APIs, Microservicios',
-      icon: '🔌',
-      path: '/modules/apis',
-  coursesCount: courses?.filter((course: Course) => course.category === 'apis').length || 0
-    },
-    {
-      title: 'Cloud',
-      description: 'Computación en la nube y servicios cloud',
-      icon: '☁️',
-      path: '/modules/cloud',
-  coursesCount: courses?.filter((course: Course) => course.category === 'cloud').length || 0
-    },
-    {
-      title: 'Data Engineer',
-      description: 'Ingeniería y análisis de datos',
-      icon: '📊',
-      path: '/modules/data',
-  coursesCount: courses?.filter((course: Course) => course.category === 'data').length || 0
+  const { data: modulesResponse } = useQuery({
+    queryKey: ['modules'],
+    queryFn: modulesApi.getAll,
+    staleTime: 10 * 60 * 1000,
+    onError: (error: any) => {
+      notifications.error(error.response?.data?.message || 'Error al cargar los módulos');
     }
-  ];
+  });
+
+  const courses = coursesResponse?.data || [];
+  const modules = modulesResponse?.data || [];
 
   return (
     <div className="dashboard-container">
@@ -86,9 +64,20 @@ export default function Dashboard() {
 
         {/* Módulos de capacitación */}
         <div className="modules-grid">
-          {modules.map((module) => (
-            <ModuleCard key={module.title} {...module} />
-          ))}
+          {modules.map((m: any) => {
+            const modId = m.id || m._id;
+            // count courses that belong to this module (fallback to legacy category name match)
+            const count = courses.filter((c: any) => {
+              const courseModule = (c as any).module || (c as any).category;
+              if (!courseModule) return false;
+              // compare by id or by legacy category string
+              return (typeof courseModule === 'string' && courseModule === modId) || (courseModule && (courseModule as any)._id && ((courseModule as any)._id.toString() === modId || (courseModule as any).toString() === modId));
+            }).length;
+
+            return (
+              <ModuleCard key={modId} module={{ id: modId, name: m.name, slug: m.slug, description: m.description }} coursesCount={count} />
+            );
+          })}
         </div>
       </div>
     </div>
