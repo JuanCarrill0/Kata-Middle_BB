@@ -8,7 +8,7 @@ COPY vite.config.ts ./
 COPY tsconfig*.json ./
 COPY index.html ./
 
-# Instalar dependencias
+# Instalar todas las dependencias (incluyendo devDependencies)
 RUN npm ci
 
 # Copiar código fuente y construir
@@ -20,16 +20,18 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Copiar solo lo necesario
+# Copiar package.json y instalar dependencias de producción + vite
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci --only=production && npm cache clean --force
+
+# Instalar Vite globalmente o como dependencia
+RUN npm install -g vite
 
 # Copiar build
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/vite.config.ts ./
 
 # Exponer puerto de Vite Preview
 EXPOSE 4173
 
-# Usar Vite Preview con configuración de hosts permitidos
-CMD ["npx", "vite", "preview", "--host", "0.0.0.0", "--port", "4173"]
+# Usar Vite Preview
+CMD ["vite", "preview", "--host", "0.0.0.0", "--port", "4173"]
