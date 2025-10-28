@@ -119,7 +119,7 @@ export default function ModuleCourses() {
               </div>
 
               {user && (user.role === 'admin' || user.role === 'teacher') && (
-                <div style={{ padding: 8 }}>
+                <div style={{ padding: 10, borderTop: '1px solid #eee', display: 'flex', justifyContent: 'flex-end', textAlign: 'center' }}>
                   <a href={`/courses/${course.id}/add-chapter`} className="view-course-button">Agregar capítulo</a>
                   <button
                     style={{ marginLeft: 8 }}

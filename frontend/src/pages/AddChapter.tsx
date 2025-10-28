@@ -36,26 +36,26 @@ export default function AddChapter() {
   };
 
   return (
-    <div className="add-chapter-container">
-      <h1>Añadir capítulo y documentos</h1>
+    <div className="add-chapter-container content-card">
+      <h1 className="card-title">Añadir capítulo y documentos</h1>
       <form onSubmit={handleSubmit} className="add-chapter-form">
         <div>
           <label>Título</label>
-          <input value={title} onChange={(e) => setTitle(e.target.value)} required />
+          <input className="form-input" value={title} onChange={(e) => setTitle(e.target.value)} required />
         </div>
 
         <div>
           <label>Descripción</label>
-          <textarea value={description} onChange={(e) => setDescription(e.target.value)} required />
+          <textarea className="form-input" value={description} onChange={(e) => setDescription(e.target.value)} required />
         </div>
 
         <div>
           <label>Archivos (PDF, PPTX, MP4, imágenes)</label>
-          <input type="file" multiple onChange={(e) => setFiles(e.target.files)} />
+          <input className="form-input" type="file" multiple onChange={(e) => setFiles(e.target.files)} />
         </div>
 
         <div>
-          <button type="submit" disabled={loading}>{loading ? 'Subiendo...' : 'Agregar capítulo'}</button>
+          <button className="submit-button" type="submit" disabled={loading}>{loading ? 'Subiendo...' : 'Agregar capítulo'}</button>
         </div>
       </form>
     </div>

@@ -55,22 +55,23 @@ export default function AddCourse() {
   };
 
   return (
-    <div className="add-course-container">
-      <h1>Crear Curso</h1>
+    <div className="add-course-container content-card">
+      <h1 className="card-title">Crear Curso</h1>
       <form className="add-course-form" onSubmit={handleSubmit}>
         <div>
           <label>Título</label>
-          <input value={title} onChange={(e) => setTitle(e.target.value)} required />
+          <input className="form-input" value={title} onChange={(e) => setTitle(e.target.value)} required />
         </div>
 
         <div>
           <label>Descripción</label>
-          <textarea value={description} onChange={(e) => setDescription(e.target.value)} required />
+          <textarea className="form-input" value={description} onChange={(e) => setDescription(e.target.value)} required />
         </div>
 
         <div>
           <label>Miniatura (opcional)</label>
           <input
+            className="form-input"
             type="file"
             accept="image/*"
             onChange={(e) => {
@@ -81,7 +82,7 @@ export default function AddCourse() {
         </div>
 
         <div>
-          <button type="submit" disabled={loading}>{loading ? 'Creando...' : 'Crear Curso'}</button>
+          <button className="submit-button" type="submit" disabled={loading}>{loading ? 'Creando...' : 'Crear Curso'}</button>
         </div>
       </form>
     </div>

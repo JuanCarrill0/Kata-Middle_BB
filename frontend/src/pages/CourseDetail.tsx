@@ -38,6 +38,7 @@ export default function CourseDetail() {
   const [optimisticCompleted, setOptimisticCompleted] = useState<Record<string, boolean>>({});
   const [preview, setPreview] = useState<{ url: string; type: string; title?: string } | null>(null);
   const previewCloseRef = useRef<HTMLButtonElement | null>(null);
+  const [openChapters, setOpenChapters] = useState<Record<string, boolean>>({});
   // Ref for synchronous in-flight checks to avoid race where state hasn't updated yet
   const inFlightRef = useRef<Record<string, boolean>>({});
 
@@ -124,6 +125,17 @@ export default function CourseDetail() {
   useEffect(() => {
     setSubscribed(!!user?.subscribedModules?.includes(moduleId));
   }, [user, moduleId]);
+
+  // Initialize which chapters are open (open first chapter by default)
+  useEffect(() => {
+    if (!course || !Array.isArray(course.chapters)) return;
+    const initial: Record<string, boolean> = {};
+    course.chapters.forEach((ch: any, i: number) => {
+      const cid = ((ch as any)._id && (ch as any)._id.toString()) || (ch as any).id || String(i);
+      initial[cid] = i === 0; // open first
+    });
+    setOpenChapters(initial);
+  }, [course]);
 
   const subscribeMutation = useMutation(() => usersApi.subscribe(moduleId), {
     onSuccess: async () => {
@@ -279,86 +291,76 @@ export default function CourseDetail() {
           <h2>Capítulos del Curso</h2>
           {course.chapters.map((chapter: any, idx: number) => {
             const chapterId = ((chapter as any)._id && (chapter as any)._id.toString()) || (chapter as any).id || String(idx);
-            const elementId = `chapter-${chapterId}`;
-            return (
-              <div className="chapter" key={chapterId}>
-                <div
-                  className="chapter-header"
-                  onClick={() => {
-                    const content = document.getElementById(elementId);
-                    if (content) {
-                      content.style.display = content.style.display === 'none' ? 'block' : 'none';
-                    }
-                  }}
-                >
-                  <h3 className="chapter-title">
-                    <span className="chapter-icon">{isChapterCompleted(chapterId) ? '✓' : '○'}</span>
-                    {chapter.title}
-                    {user && (user.role === 'admin' || user.role === 'teacher') && (
-                      <button
-                        style={{ marginLeft: 12 }}
-                        className="danger"
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          const confirmed = await notifications.confirm('Se eliminará el capítulo y sus archivos.');
-                          if (confirmed.isConfirmed) {
-                            deleteChapterMutation.mutate(chapterId);
-                          }
-                        }}
-                      >Eliminar capítulo</button>
-                    )}
-                  </h3>
-                </div>
-                <div id={elementId} className="chapter-content">
-                  <p className="chapter-description">{chapter.description}</p>
-                  <div className="chapter-resources">
-                    {Array.isArray(chapter.content) && chapter.content.map((c: any, idx2: number) => {
-                      const isGridFs = typeof c.url === 'string' && c.url.startsWith('/api/files');
-                      // If the app is deployed as a static site (e.g. Render static service),
-                      // relative paths like /api/files/... will be served by the static host
-                      // and typically return 404. Prefer absolute API base when provided.
-                      const apiBase = (import.meta.env.VITE_API_URL || '').toString();
-                      const trimmedApiBase = apiBase ? apiBase.replace(/\/$/, '') : '';
-                      const resourceUrl = isGridFs
-                        ? (trimmedApiBase ? `${trimmedApiBase}${c.url}` : c.url)
-                        : `${import.meta.env.VITE_MINIO_URL}/${c.url}`;
+            const isOpen = !!openChapters[chapterId];
 
-                      if (c.type === 'video') {
+            const toggleOpen = (e?: React.MouseEvent) => {
+              if (e) e.stopPropagation();
+              setOpenChapters((s) => ({ ...s, [chapterId]: !s[chapterId] }));
+            };
+
+            return (
+              <article className={`chapter-card ${isOpen ? 'open' : ''}`} key={chapterId}>
+                <header className="chapter-header" onClick={toggleOpen} role="button" aria-expanded={isOpen} tabIndex={0}>
+                  <div className="chapter-left">
+                    <span className="chapter-icon" aria-hidden>{isChapterCompleted(chapterId) ? '✓' : '○'}</span>
+                    <h3 className="chapter-title">{chapter.title}</h3>
+                  </div>
+
+                  <div className="chapter-actions">
+                    <button
+                      className={`complete-button ${isChapterCompleted(chapterId) ? 'completed' : ''}`}
+                      onClick={(e) => { e.stopPropagation(); handleCompleteChapter(chapterId); }}
+                      disabled={isChapterCompleted(chapterId) || !!loadingChapters[chapterId]}
+                      aria-pressed={isChapterCompleted(chapterId)}
+                    >
+                      {loadingChapters[chapterId] ? 'Procesando...' : (isChapterCompleted(chapterId) ? 'Completado' : 'Marcar como completado')}
+                    </button>
+
+                    {/* Eliminar capítulo */}
+                  </div>
+                </header>
+
+                {isOpen && (
+                  <div className="chapter-content">
+                    <p className="chapter-description">{chapter.description}</p>
+                    <div className="chapter-resources">
+                      {Array.isArray(chapter.content) && chapter.content.map((c: any, idx2: number) => {
+                        const isGridFs = typeof c.url === 'string' && c.url.startsWith('/api/files');
+                        const apiBase = (import.meta.env.VITE_API_URL || '').toString();
+                        const trimmedApiBase = apiBase ? apiBase.replace(/\/$/, '') : '';
+                        const resourceUrl = isGridFs
+                          ? (trimmedApiBase ? `${trimmedApiBase}${c.url}` : c.url)
+                          : `${import.meta.env.VITE_MINIO_URL}/${c.url}`;
+
+                        if (c.type === 'video') {
+                          return (
+                            <div className="resource-card" key={idx2}>
+                              <h4 className="resource-title">Video</h4>
+                              <video className="resource-video" controls>
+                                <source src={resourceUrl} type="video/mp4" />
+                                Tu navegador no soporta video.
+                              </video>
+                            </div>
+                          );
+                        }
+
                         return (
                           <div className="resource-card" key={idx2}>
-                            <h4 className="resource-title">Video del capítulo</h4>
-                            <video className="resource-video" controls>
-                              <source src={resourceUrl} type="video/mp4" />
-                              Tu navegador no soporta video.
-                            </video>
+                            <h4 className="resource-title">Material</h4>
+                            <button
+                              type="button"
+                              className="resource-link"
+                              onClick={() => setPreview({ url: resourceUrl, type: c.type, title: chapter.title })}
+                            >
+                              Ver {c.type}
+                            </button>
                           </div>
                         );
-                      }
-
-                      return (
-                        <div className="resource-card" key={idx2}>
-                          <h4 className="resource-title">Material de apoyo</h4>
-                          <button
-                            type="button"
-                            className="resource-link"
-                            onClick={() => setPreview({ url: resourceUrl, type: c.type, title: chapter.title })}
-                          >
-                            Ver {c.type}
-                          </button>
-                        </div>
-                      );
-                    })}
+                      })}
+                    </div>
                   </div>
-                  <button
-                    className={`complete-button ${isChapterCompleted(chapterId) ? 'completed' : ''}`}
-                    onClick={() => handleCompleteChapter(chapterId)}
-                    disabled={isChapterCompleted(chapterId) || !!loadingChapters[chapterId]}
-                    aria-disabled={isChapterCompleted(chapterId) || !!loadingChapters[chapterId]}
-                  >
-                    {loadingChapters[chapterId] ? 'Procesando...' : (isChapterCompleted(chapterId) ? 'Completado' : 'Marcar como completado')}
-                  </button>
-                </div>
-              </div>
+                )}
+              </article>
             );
           })}
         </div>

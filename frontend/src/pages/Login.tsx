@@ -22,11 +22,11 @@ export default function Login() {
     try {
       const response = await authApi.login(formData);
       notifications.close();
-      
+
       const { token, user } = response.data;
       setAuth(token, user);
-      
-      // Pequeño retraso para asegurar que el estado se actualice
+
+      // small delay so state updates before navigation
       setTimeout(() => {
         notifications.success('¡Bienvenido de vuelta!');
         navigate('/dashboard', { replace: true });
@@ -49,11 +49,27 @@ export default function Login() {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-box">
-        <div className="auth-paper">
-          <h1 className="auth-title">Portal de Capacitaciones</h1>
-          <h2 className="auth-subtitle">Iniciar Sesión</h2>
+    <div className="auth-page">
+      <div className="auth-left">
+        <div className="brand">Portal de Capacitaciones</div>
+        <h1 className="hero-title">Aprende a tu ritmo, alcanza tus metas</h1>
+        <p className="hero-subtitle">Cursos, insignias y seguimiento de progreso para tu crecimiento profesional.</p>
+
+        <ul className="hero-features">
+          <li>Certificados e insignias</li>
+          <li>Contenido multimedia y documentos</li>
+          <li>Avance medible por curso</li>
+        </ul>
+
+        <div className="hero-cta">
+          <button className="ghost" onClick={() => navigate('/register')}>Crear cuenta</button>
+          <button className="outline" onClick={() => navigate('/courses')}>Explorar cursos</button>
+        </div>
+      </div>
+
+      <div className="auth-right">
+        <div className="auth-card">
+          <h2 className="card-title">Iniciar Sesión</h2>
 
           <form className="auth-form" onSubmit={handleSubmit}>
             <div className="form-group">
@@ -95,14 +111,16 @@ export default function Login() {
               {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
             </button>
 
-            <button
-              type="button"
-              className="link-button"
-              onClick={() => navigate('/register')}
-              disabled={loading}
-            >
-              ¿No tienes cuenta? Regístrate
-            </button>
+            <div className="card-footer">
+              <button
+                type="button"
+                className="link-button"
+                onClick={() => navigate('/register')}
+                disabled={loading}
+              >
+                ¿No tienes cuenta? Regístrate
+              </button>
+            </div>
           </form>
         </div>
       </div>

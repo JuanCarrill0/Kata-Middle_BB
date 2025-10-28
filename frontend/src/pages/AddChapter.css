@@ -1,10 +1,8 @@
+
 .add-chapter-container {
   max-width: 800px;
   margin: 24px auto;
   padding: 16px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 
 .add-chapter-form {
@@ -19,32 +17,14 @@
   margin-bottom: 6px;
 }
 
-.add-chapter-form input[type="text"],
-.add-chapter-form textarea,
-.add-chapter-form input[type="file"] {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #e5e7eb;
-  border-radius: 4px;
-  font-size: 14px;
-}
+.add-chapter-form textarea { min-height: 100px; resize: vertical; }
+
+.add-chapter-form .form-input { font-size:14px }
 
 .add-chapter-form textarea {
   min-height: 100px;
   resize: vertical;
 }
 
-.add-chapter-form button {
-  align-self: flex-start;
-  padding: 8px 16px;
-  background: #2563eb;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.add-chapter-form button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
+.add-chapter-form .submit-button { align-self:flex-start }
+.add-chapter-form .submit-button:disabled { opacity:0.6; cursor:not-allowed }

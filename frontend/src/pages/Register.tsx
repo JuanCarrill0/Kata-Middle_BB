@@ -26,7 +26,7 @@ export default function Register() {
       setAuth(response.data.token, response.data.user);
       notifications.close();
       notifications.success('¡Registro exitoso! Bienvenido.');
-      navigate('/');
+      navigate('/dashboard');
     } catch (err: any) {
       notifications.error(
         err.response?.data?.message || 'Error al registrar usuario'
@@ -45,14 +45,29 @@ export default function Register() {
   };
 
   return (
-    <div className="register-container">
-      <div className="register-box">
-        <div className="register-paper">
-          <h1 className="register-title">Portal de Capacitaciones</h1>
-          <h2 className="register-subtitle">Registro de Usuario</h2>
+    <div className="auth-page register">
+      <div className="auth-left">
+        <div className="brand">Portal de Capacitaciones</div>
+        <h1 className="hero-title">Únete y empieza a aprender</h1>
+        <p className="hero-subtitle">Crea una cuenta como Estudiante o Profesor y comparte conocimiento.</p>
 
-          <form className="register-form" onSubmit={handleSubmit}>
-            <div className="form-field">
+        <ul className="hero-features">
+          <li>Panel de progreso personal</li>
+          <li>Creación de cursos para profesores</li>
+          <li>Descarga de certificados</li>
+        </ul>
+
+        <div className="hero-cta">
+          <button className="ghost" onClick={() => navigate('/courses')}>Ver cursos</button>
+        </div>
+      </div>
+
+      <div className="auth-right">
+        <div className="auth-card">
+          <h2 className="card-title">Registro</h2>
+
+          <form className="auth-form" onSubmit={handleSubmit}>
+            <div className="form-group">
               <input
                 className="form-input"
                 required
@@ -67,7 +82,7 @@ export default function Register() {
               />
             </div>
 
-            <div className="form-field">
+            <div className="form-group">
               <input
                 className="form-input"
                 required
@@ -82,7 +97,7 @@ export default function Register() {
               />
             </div>
 
-            <div className="form-field">
+            <div className="form-group">
               <input
                 className="form-input"
                 required
@@ -97,9 +112,10 @@ export default function Register() {
               />
             </div>
 
-              <div className="form-field">
-                <label style={{ display: 'block', marginBottom: 6 }}>Registrarse como</label>
-                <label style={{ marginRight: 12 }}>
+            <div className="form-group role-group">
+              <label className="role-label">Registrarse como</label>
+              <div className="role-options">
+                <label className={`role-pill ${formData.role === 'user' ? 'active' : ''}`}>
                   <input
                     type="radio"
                     name="role"
@@ -107,9 +123,10 @@ export default function Register() {
                     checked={formData.role === 'user'}
                     onChange={handleChange}
                     disabled={loading}
-                  /> Usuario
+                  />
+                  <span>Usuario</span>
                 </label>
-                <label>
+                <label className={`role-pill ${formData.role === 'teacher' ? 'active' : ''}`}>
                   <input
                     type="radio"
                     name="role"
@@ -117,9 +134,11 @@ export default function Register() {
                     checked={formData.role === 'teacher'}
                     onChange={handleChange}
                     disabled={loading}
-                  /> Profesor
+                  />
+                  <span>Profesor</span>
                 </label>
               </div>
+            </div>
 
             <button
               type="submit"
@@ -129,14 +148,16 @@ export default function Register() {
               {loading ? 'Registrando...' : 'Registrarse'}
             </button>
 
-            <button
-              type="button"
-              className="login-link"
-              onClick={() => navigate('/login')}
-              disabled={loading}
-            >
-              ¿Ya tienes cuenta? Inicia sesión
-            </button>
+            <div className="card-footer">
+              <button
+                type="button"
+                className="link-button"
+                onClick={() => navigate('/login')}
+                disabled={loading}
+              >
+                ¿Ya tienes cuenta? Inicia sesión
+              </button>
+            </div>
           </form>
         </div>
       </div>

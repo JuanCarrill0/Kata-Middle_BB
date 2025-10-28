@@ -1,103 +1,136 @@
-.auth-container {
-  max-width: 400px;
-  margin: 0 auto;
-  padding: 2rem 1rem;
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+  padding: 40px;
+  background: linear-gradient(135deg, #0f172a 0%, #0b3a67 50%, #0b6b5e 100%);
+  color: #fff;
 }
 
-.auth-box {
-  margin-top: 4rem;
+.auth-left {
+  flex: 1 1 420px;
+  max-width: 520px;
+  padding: 40px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+  box-shadow: 0 10px 30px rgba(2,6,23,0.6);
 }
 
-.auth-paper {
-  background-color: white;
+.brand {
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  margin-bottom: 12px;
+  color: #e6f7ff;
+}
+
+.hero-title {
+  font-size: 2.2rem;
+  margin: 8px 0 8px;
+  color: #fff;
+}
+
+.hero-subtitle {
+  color: rgba(255,255,255,0.85);
+  margin-bottom: 18px;
+}
+
+.hero-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px 0;
+}
+
+.hero-features li {
+  margin: 8px 0;
+  padding-left: 18px;
+  position: relative;
+}
+
+.hero-features li:before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: #7ef9a2;
+  font-weight: 700;
+}
+
+.hero-cta { display:flex; gap:10px; margin-top:16px }
+.hero-cta .ghost {
+  background: transparent;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.16);
+  padding: 8px 14px;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  padding: 2rem;
+  cursor: pointer;
+}
+.hero-cta .outline {
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
 }
 
-.auth-title {
-  font-size: 1.5rem;
-  text-align: center;
-  margin-bottom: 0.5rem;
-  color: #333;
+.auth-right {
+  flex: 0 0 420px;
+  max-width: 480px;
 }
 
-.auth-subtitle {
-  font-size: 1.25rem;
-  text-align: center;
-  margin-bottom: 2rem;
-  color: #666;
+.auth-card {
+  background: #ffffff;
+  color: #0b2132;
+  border-radius: 12px;
+  padding: 28px;
+  box-shadow: 0 12px 30px rgba(2,6,23,0.2);
 }
 
-.auth-form {
-  margin-top: 1.5rem;
+.card-title {
+  margin: 0 0 6px 0;
+  font-size: 1.4rem;
 }
 
-.form-group {
-  margin-bottom: 1rem;
-}
-
-.form-label {
-  display: block;
-  margin-bottom: 0.5rem;
-  color: #666;
-  font-size: 0.875rem;
-}
-
+.auth-form { margin-top:14px }
+.form-group { margin-bottom:12px }
 .form-input {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #e6eef2;
   font-size: 1rem;
-  transition: border-color 0.2s ease;
+  transition: box-shadow 0.18s ease, border-color 0.18s ease;
 }
-
-.form-input:focus {
-  outline: none;
-  border-color: #1976d2;
-}
-
-.form-input:disabled {
-  background-color: #f5f5f5;
-  cursor: not-allowed;
-}
+.form-input:focus { outline:none; box-shadow:0 6px 18px rgba(11,33,50,0.06); border-color:#4fb3ff }
 
 .submit-button {
   width: 100%;
-  padding: 0.75rem;
-  margin: 1.5rem 0 1rem;
-  background-color: #1976d2;
+  padding: 12px 14px;
+  margin-top: 8px;
+  background: linear-gradient(90deg,#0b82ff,#0bb5a9);
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 10px;
   font-size: 1rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
-
-.submit-button:hover {
-  background-color: #1565c0;
-}
-
-.submit-button:disabled {
-  background-color: #90caf9;
-  cursor: not-allowed;
-}
+.submit-button:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(11,130,255,0.18) }
+.submit-button:disabled { opacity:0.6; cursor:not-allowed }
 
 .link-button {
-  width: 100%;
-  padding: 0.75rem;
   background: none;
   border: none;
-  color: #1976d2;
-  font-size: 1rem;
+  color: #0b82ff;
   cursor: pointer;
-  transition: color 0.2s ease;
+  margin-top: 8px;
 }
 
-.link-button:hover {
-  color: #1565c0;
-  text-decoration: underline;
+.card-footer { margin-top: 10px; text-align:center }
+
+@media (max-width: 900px) {
+  .auth-page { flex-direction: column; padding: 20px }
+  .auth-left, .auth-right { max-width: 100%; width: 100% }
 }

@@ -56,8 +56,8 @@ export default function ModuleCard({ module, icon, path = `/modules/${module.id}
   };
 
   return (
-    <div className="module-card">
-      <Link to={path} className="module-card-content">
+    <div className="module-card content-card">
+      <Link to={path} className="module-card-content" aria-label={`Ver módulo ${module.name}`}>
         <div className="module-card-header">
           <span className="module-card-icon">{icon || '📚'}</span>
           <h3 className="module-card-title">{module.name}</h3>

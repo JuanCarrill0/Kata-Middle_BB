@@ -7,8 +7,8 @@ interface BadgeCardProps {
 
 export default function BadgeCard({ badge }: BadgeCardProps) {
   return (
-    <div className="badge-tooltip" data-tooltip={badge.description}>
-      <div className="badge-card">
+    <div className="badge-tooltip" data-tooltip={badge.description} aria-label={badge.name}>
+      <div className="badge-card content-card" role="img" aria-hidden>
         <div className="badge-content">
           <div className="badge-emoji" aria-hidden>
             🏅

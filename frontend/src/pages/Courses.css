@@ -6,25 +6,30 @@
   font-size: 2rem;
   margin-bottom: 1.5rem;
   color: #333;
+  position: relative;
+  left: 100px;
 }
 
 .courses-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 300px));
   gap: 1.5rem;
-  padding: 0 1rem;
+  padding: 5rem;
 }
 
 .course-card {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: #fff;
+  color: #0b2132;
+  padding: 18px;
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(2,6,23,0.09);
   overflow: hidden;
-  transition: transform 0.2s ease;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
 .course-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-6px);
+  box-shadow: 0 18px 40px rgba(2,6,23,0.12);
 }
 
 .course-illustration {
@@ -33,7 +38,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(180deg, #f5f9ff 0%, #ffffff 100%);
+  background: linear-gradient(180deg, #eaf6ff 0%, #ffffff 100%);
 }
 .course-illustration svg {
   width: 64px;
@@ -92,21 +97,19 @@
 }
 
 .view-course-button {
-  background-color: #1976d2;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #0b82ff;
   color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
+  padding: 8px 12px;
+  border-radius: 8px;
   text-decoration: none;
-  font-size: 0.875rem;
-  font-weight: 500;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
+  font-size: 0.9rem;
+  font-weight: 600;
 }
 
-.view-course-button:hover {
-  background-color: #1565c0;
-}
+.view-course-button:hover { transform: translateY(-2px) }
 
 .loading {
   display: flex;

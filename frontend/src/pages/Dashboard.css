@@ -2,90 +2,52 @@
   padding: 2rem;
 }
 
-.dashboard-grid {
-  display: grid;
-  gap: 2rem;
+.dashboard-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f172a 0%, #0b3a67 50%, #0b6b5e 100%);
+  padding-bottom: 40px;
 }
 
-.welcome-section {
-  margin-bottom: 2rem;
+.page-hero {
+  padding: 40px 20px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+  margin: 24px auto;
+  max-width: 1200px;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(2,6,23,0.4);
 }
 
-.welcome-title {
-  font-size: 2rem;
-  color: var(--text-primary);
-  margin-bottom: 1rem;
+.hero-inner { max-width: 1100px; margin: 0 auto }
+.hero-title { color: #fff; font-size: 2rem; margin: 0 0 6px }
+.hero-sub { color: rgba(255,255,255,0.9); margin: 0 0 12px }
+.hero-cta { display:flex; gap:10px }
+.hero-cta .ghost { background: transparent; color: #fff; border:1px solid rgba(255,255,255,0.12); padding:8px 12px; border-radius:8px }
+.hero-cta .outline { background: rgba(255,255,255,0.06); color:#fff; padding:8px 12px; border-radius:8px }
+
+.dashboard-content { max-width: 1200px; margin: 24px auto; padding: 0 20px }
+.content-row { display:flex; gap:20px; flex-direction:column }
+
+.content-card { background:#fff; border-radius:12px; padding:18px; box-shadow: 0 12px 30px rgba(2,6,23,0.12); color:#0b2132 }
+.badges-card { min-height: 140px }
+.modules-card { min-height: 120px }
+
+.badges-header { display:flex; align-items:center; gap:8px; margin-bottom:12px }
+.badges-title { margin:0; font-size:1.1rem }
+.badges-icon { font-size:20px }
+
+.badges-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap:12px }
+.no-badges-text { color: #475569 }
+
+.modules-title { margin:0 0 12px 0 }
+.modules-grid { display:grid; grid-template-columns: repeat(2, 2fr); gap:3% }
+
+@media (min-width: 900px) {
+  .content-row { flex-direction:row }
+  .badges-card { flex: 0 0 320px }
+  .modules-card { flex: 1 }
+  .modules-grid { grid-template-columns: repeat(2, 1fr) }
 }
 
-.badges-section {
-  background-color: var(--surface-color);
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  padding: 1rem;
-  margin-bottom: 2rem;
-}
-
-.badges-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.badges-title {
-  font-size: 1.25rem;
-  margin-left: 0.5rem;
-}
-
-.badges-icon {
-  width: 24px;
-  height: 24px;
-  color: var(--primary-color);
-}
-
-.badges-grid {
-  display: grid;
-  gap: 1rem;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-}
-
-.no-badges-text {
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-}
-
-.modules-grid {
-  display: grid;
-  gap: 2rem;
-  grid-template-columns: repeat(1, 1fr);
-}
-
-@media (min-width: 600px) {
-  .modules-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (min-width: 960px) {
-  .modules-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-/* Iconos para los módulos */
-.module-icon {
-  width: 32px;
-  height: 32px;
-  color: var(--primary-color);
-}
-
-/* Contenedor para los iconos de módulo */
-.icon-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  background-color: rgba(25, 118, 210, 0.1);
-  border-radius: 50%;
-  margin-bottom: 1rem;
+@media (min-width: 1200px) {
+  .modules-grid { grid-template-columns: repeat(3, 1fr) }
 }

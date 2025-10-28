@@ -12,9 +12,9 @@
 }
 
 .profile-content {
-  background-color: var(--surface-color);
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(2,6,23,0.08);
   padding: 2rem;
 }
 
@@ -72,10 +72,10 @@
 }
 
 .stat-card {
-  background-color: var(--primary-color);
+  background: linear-gradient(135deg, #0f172a 0%, #0b3a67 50%, #0b6b5e 100%);
   color: white;
   padding: 1.5rem;
-  border-radius: 8px;
+  border-radius: 10px;
   text-align: center;
 }
 
