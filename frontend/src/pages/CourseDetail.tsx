@@ -98,15 +98,6 @@ export default function CourseDetail() {
     }
   });
 
-  const deleteChapterMutation = useMutation((chapterId: string) => coursesApi.deleteChapter(id!, chapterId), {
-    onSuccess: () => {
-      queryClient.invalidateQueries(['course', id]);
-      notifications.success('Capítulo eliminado');
-    },
-    onError: (error: any) => {
-      notifications.error(error.response?.data?.message || 'Error al eliminar capítulo');
-    }
-  });
 
   // Obtener el historial canonico del curso (si existe) para calcular progreso real
   const { data: courseHistoryResp } = useQuery(['history', 'course', id],
