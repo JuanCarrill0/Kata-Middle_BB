@@ -5,15 +5,14 @@ WORKDIR /app
 # Instalar dependencias de compilación
 RUN apk add --no-cache python3 make g++
 
-# Copiar solo package.json y package-lock.json desde la carpeta backend
-# (esto permite que el contexto de build sea la raíz del repo)
-COPY backend/package*.json ./
+# Copiar package.json desde el directorio actual
+COPY package*.json ./
 
 # Instalar dependencias
 RUN npm install
 
-# Copiar el resto del código del backend
-COPY backend .
+# Copiar todo el código del backend (directorio actual)
+COPY . .
 
 # Compilar TypeScript
 RUN npm run build
