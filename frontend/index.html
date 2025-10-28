@@ -11,6 +11,25 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Si la navegación fue una recarga (reload), redirigir al raíz del sitio estático -->
+    <script>
+      (function(){
+        try {
+          var navEntry = (performance.getEntriesByType && performance.getEntriesByType('navigation') && performance.getEntriesByType('navigation')[0]) || null;
+          var navType = navEntry ? navEntry.type : (performance.navigation && performance.navigation.type === 1 ? 'reload' : 'navigate');
+          if (navType === 'reload') {
+            var root = '/';
+            if (location.pathname !== root) {
+              // usar replace para no añadir un historial extra
+              location.replace(root);
+            }
+          }
+        } catch (e) {
+          // silencioso - si algo falla, no romper la app
+          console.warn('reload-redirect error', e);
+        }
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

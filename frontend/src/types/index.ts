@@ -38,6 +38,7 @@ export interface User {
   email: string;
   role: 'user' | 'admin' | 'teacher';
   badges: Badge[];
+  completedCourses?: string[];
   progress: {
     courseId: string;
     completedChapters: string[];

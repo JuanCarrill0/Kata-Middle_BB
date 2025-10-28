@@ -10,11 +10,9 @@ export default function BadgeCard({ badge }: BadgeCardProps) {
     <div className="badge-tooltip" data-tooltip={badge.description}>
       <div className="badge-card">
         <div className="badge-content">
-          <img
-            className="badge-image"
-            src={badge.imageUrl}
-            alt={badge.name}
-          />
+          <div className="badge-emoji" aria-hidden>
+            🏅
+          </div>
           <div className="badge-title">
             {badge.name}
           </div>

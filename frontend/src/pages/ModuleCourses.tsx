@@ -67,11 +67,7 @@ export default function ModuleCourses() {
     return Array.isArray(moduleCoursesData) ? moduleCoursesData : [];
   })();
 
-  const resolveImage = (img?: string) => {
-    if (!img) return `${import.meta.env.BASE_URL}default-badge.png`;
-    if (/^https?:\/\//i.test(img)) return img;
-    return `${import.meta.env.VITE_MINIO_URL}/${img}`;
-  };
+  // (no thumbnail) we use an illustration instead
 
   const getProgress = (courseId: string) => {
     if (!user?.progress) return 0;
@@ -115,11 +111,14 @@ export default function ModuleCourses() {
             <div key={course.id} className="course-card">
               <div className="course-card-clickable" onClick={() => navigate(`/courses/${course.id}`)}>
               <div className="course-content">
-                <img
-                  src={resolveImage(course.imageUrl)}
-                  alt={course.title}
-                  className="course-image"
-                />
+                <div className="course-illustration" aria-hidden="true">
+                  <svg width="120" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 5.5C3 4.67157 3.67157 4 4.5 4H19" stroke="#1976d2" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M3 19.5C3 18.6716 3.67157 18 4.5 18H19" stroke="#1976d2" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M19 4v14" stroke="#1976d2" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M8 7h8v10H8z" fill="#e3f2fd" stroke="#1976d2" strokeWidth="1"/>
+                  </svg>
+                </div>
                 <h2 className="course-title">
                   {course.title}
                 </h2>

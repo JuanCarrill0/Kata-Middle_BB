@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { auth } from '../middleware/auth';
 import { History } from '../models/History';
+import { Module } from '../models/Module';
 import { Course } from '../models/Course';
 
 const router = Router();
@@ -21,16 +22,73 @@ router.get('/my-history', auth, async (req, res) => {
       byCategory[entry.category].push(entry);
     });
 
-    // Calcular estadísticas
+    // Para evitar contar el mismo curso múltiples veces (si existieran duplicados),
+    // calculamos por categoría el conjunto de courseIds completados y usamos su tamaño.
+    const statsByCategory = await Promise.all(Object.keys(byCategory).map(async (category) => {
+      const entries = byCategory[category];
+
+      // Mapear courseId -> título (usar la primera entrada encontrada)
+      const courseMap: { [courseId: string]: { id: string, title: string, lastCompleted?: Date } } = {};
+      entries.forEach(e => {
+        const courseId = String(((e.course as any)?._id) || e.course);
+        if (!courseMap[courseId]) {
+          courseMap[courseId] = { id: courseId, title: e.course?.title || '' };
+        }
+        // Mantener la fecha más reciente de completado para ese curso
+        if (!courseMap[courseId].lastCompleted || (e.completedAt && new Date(e.completedAt) > new Date(courseMap[courseId].lastCompleted!))) {
+          courseMap[courseId].lastCompleted = e.completedAt;
+        }
+      });
+
+      const uniqueCourseIds = Object.keys(courseMap);
+      const count = uniqueCourseIds.length;
+
+      // La última fecha completada en el módulo (entre todas las entradas)
+      const lastCompleted = entries.reduce((acc, cur) => {
+        const d = cur.completedAt ? new Date(cur.completedAt) : null;
+        if (!d) return acc;
+        if (!acc || d > acc) return d;
+        return acc;
+      }, null as Date | null);
+
+      const completedCourses = uniqueCourseIds.map(id => ({ id, title: courseMap[id].title }));
+
+      // Calcular total de cursos existentes en la plataforma para este módulo
+      let totalCourses = 0;
+      try {
+        const modDoc = await Module.findOne({ name: category }).lean();
+        const orConditions: any[] = [];
+        if (modDoc && modDoc._id) {
+          orConditions.push({ module: modDoc._id });
+        }
+        orConditions.push({ category: category });
+        totalCourses = await Course.countDocuments({ $or: orConditions });
+      } catch (e) {
+        // Fallback: si falla la consulta, contar todos los cursos como antes
+        const allCourses = await Course.find().populate('module', 'name').lean();
+        totalCourses = allCourses.filter((c: any) => {
+          const modName = c.module && c.module.name ? String(c.module.name) : null;
+          const catName = c.category ? String(c.category) : null;
+          return (modName && modName.toLowerCase() === String(category).toLowerCase()) || (catName && catName.toLowerCase() === String(category).toLowerCase());
+        }).length;
+      }
+
+      return {
+        category,
+        count,
+        lastCompleted,
+        totalCourses,
+        completedCourses,
+      };
+    }));
+
+    // Total de cursos completados (únicos) por el usuario
+  const uniqueCoursesAll = new Set(history.map(h => String(((h.course as any)?._id) || h.course)));
     const stats = {
-      totalCourses: history.length,
+      totalCourses: uniqueCoursesAll.size,
       totalChapters: history.reduce((acc, curr) => acc + curr.completedChapters.length, 0),
       totalTime: history.reduce((acc, curr) => acc + (curr.totalTime || 0), 0),
-      byCategory: Object.keys(byCategory).map(category => ({
-        category,
-        count: byCategory[category].length,
-        lastCompleted: byCategory[category][0]?.completedAt,
-      })),
+      byCategory: statsByCategory,
     };
 
     res.json({ history, stats });
@@ -54,16 +112,63 @@ const fetchMyHistory = async (req: any, res: any) => {
       byCategory[entry.category].push(entry);
     });
 
-    // Calcular estadísticas
+    // Calcular estadísticas (contando cursos únicos por categoría)
+    const statsByCategory = await Promise.all(Object.keys(byCategory).map(async (category) => {
+      const entries = byCategory[category];
+
+      const courseMap: { [courseId: string]: { id: string, title: string, lastCompleted?: Date } } = {};
+      entries.forEach((e: any) => {
+        const courseId = String(((e.course as any)?._id) || e.course);
+        if (!courseMap[courseId]) {
+          courseMap[courseId] = { id: courseId, title: e.course?.title || '' };
+        }
+        if (!courseMap[courseId].lastCompleted || (e.completedAt && new Date(e.completedAt) > new Date(courseMap[courseId].lastCompleted!))) {
+          courseMap[courseId].lastCompleted = e.completedAt;
+        }
+      });
+
+      const uniqueCourseIds = Object.keys(courseMap);
+      const lastCompleted = entries.reduce((acc: Date | null, cur: any) => {
+        const d = cur.completedAt ? new Date(cur.completedAt) : null;
+        if (!d) return acc;
+        if (!acc || d > acc) return d;
+        return acc;
+      }, null as Date | null);
+
+      // calcular totalCourses para este módulo (por nombre de módulo / categoría)
+      let totalCourses = 0;
+      try {
+        const modDoc = await Module.findOne({ name: category }).lean();
+        const orConditions: any[] = [];
+        if (modDoc && modDoc._id) {
+          orConditions.push({ module: modDoc._id });
+        }
+        orConditions.push({ category: category });
+        totalCourses = await Course.countDocuments({ $or: orConditions });
+      } catch (e) {
+        const allCourses = await Course.find().populate('module', 'name').lean();
+        totalCourses = allCourses.filter((c: any) => {
+          const modName = c.module && c.module.name ? String(c.module.name) : null;
+          const catName = c.category ? String(c.category) : null;
+          return (modName && modName.toLowerCase() === String(category).toLowerCase()) || (catName && catName.toLowerCase() === String(category).toLowerCase());
+        }).length;
+      }
+
+      return {
+        category,
+        count: uniqueCourseIds.length,
+        lastCompleted,
+        totalCourses,
+        completedCourses: uniqueCourseIds.map(id => ({ id, title: courseMap[id].title })),
+      };
+    }));
+
+    const uniqueCoursesAll = new Set(history.map(h => String(((h.course as any)?._id) || h.course)));
     const stats = {
-      totalCourses: history.length,
+      totalCourses: uniqueCoursesAll.size,
       totalChapters: history.reduce((acc: number, curr: any) => acc + curr.completedChapters.length, 0),
       totalTime: history.reduce((acc: number, curr: any) => acc + (curr.totalTime || 0), 0),
-      byCategory: Object.keys(byCategory).map(category => ({
-        category,
-        count: byCategory[category].length,
-        lastCompleted: byCategory[category][0]?.completedAt,
-      })),
+      byCategory: statsByCategory,
     };
 
     res.json({ history, stats });

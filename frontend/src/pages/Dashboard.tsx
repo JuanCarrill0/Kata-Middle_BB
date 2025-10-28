@@ -66,13 +66,15 @@ export default function Dashboard() {
         <div className="modules-grid">
           {modules.map((m: any) => {
             const modId = m.id || m._id;
-            // count courses that belong to this module (fallback to legacy category name match)
-            const count = courses.filter((c: any) => {
+            // Prefer server-provided coursesCount when available, otherwise compute locally
+            const computedCount = courses.filter((c: any) => {
               const courseModule = (c as any).module || (c as any).category;
               if (!courseModule) return false;
               // compare by id or by legacy category string
               return (typeof courseModule === 'string' && courseModule === modId) || (courseModule && (courseModule as any)._id && ((courseModule as any)._id.toString() === modId || (courseModule as any).toString() === modId));
             }).length;
+
+            const count = typeof m.coursesCount === 'number' ? m.coursesCount : computedCount;
 
             return (
               <ModuleCard key={modId} module={{ id: modId, name: m.name, slug: m.slug, description: m.description }} coursesCount={count} />

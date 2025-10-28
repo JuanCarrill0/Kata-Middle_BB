@@ -64,6 +64,7 @@ export const usersApi = {
 
 export const historyApi = {
   getUserHistory: () => api.get<{ data: ApiHistory }>('/api/history/me'),
+  getCourseHistory: (courseId: string) => api.get(`/api/history/course/${courseId}`),
 };
 
 export default api;

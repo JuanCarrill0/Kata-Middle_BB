@@ -277,10 +277,10 @@ router.post('/:courseId/chapters/:chapterId/complete', auth, async (req, res) =>
       // Añadir curso a completedCourses si no está ya
       if (!user.completedCourses.includes(course._id)) {
         user.completedCourses.push(course._id);
-        
+
         // Marcar fecha de finalización en el historial
         history.completedAt = new Date();
-        
+
         // Crear o actualizar la insignia del curso
         let badge = await Badge.findOne({ course: course._id });
         if (!badge) {
@@ -306,6 +306,13 @@ router.post('/:courseId/chapters/:chapterId/complete', auth, async (req, res) =>
             user.badges.push(badge._id);
           }
         }
+      }
+
+      // Remover el/los progreso(s) del curso de la lista de cursos en progreso del usuario
+      try {
+        (user as any).progress = (user as any).progress.filter((p: any) => String(p.courseId) !== String(courseId));
+      } catch (e) {
+        // ignore if structure unexpected
       }
     }
 

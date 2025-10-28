@@ -8,7 +8,8 @@ import './Profile.css';
 import type { ApiHistory } from '../types/api';
 
 // Helpers
-const getCategoryColor = (category: string): string => {
+// Devuelve un color para un módulo concreto (basado en nombre/categoría)
+const getModuleColor = (moduleName: string): string => {
   const colors: { [key: string]: string } = {
     'fullstack': '#4F46E5', // Indigo
     'apis': '#10B981', // Emerald
@@ -16,7 +17,8 @@ const getCategoryColor = (category: string): string => {
     'data': '#F59E0B', // Amber
     'default': '#6B7280' // Gray
   };
-  return colors[category] || colors.default;
+  const key = (moduleName || '').toLowerCase();
+  return colors[key] || colors.default;
 };
 
 export default function Profile() {
@@ -31,7 +33,18 @@ export default function Profile() {
     }
   });
 
-  const coursesStarted = user?.progress?.length || 0;
+  // Calcular cursos en progreso: deben tener al menos 1 capítulo completado
+  // y no aparecer en completedCourses
+  const coursesStarted = (user?.progress || []).filter((p: any) => {
+    try {
+      const pid = String(p.courseId || p.courseId);
+      const completed = ((user as any)?.completedCourses || []).some((cc: any) => String(cc) === pid);
+      const hasProgress = Array.isArray(p.completedChapters) && p.completedChapters.length > 0;
+      return !completed && hasProgress;
+    } catch (e) {
+      return false;
+    }
+  }).length || 0;
 
   return (
     <div className="profile-container">
@@ -75,29 +88,46 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Progreso por Categoría */}
+          {/* Progreso por Módulo (agrupado por el nombre del módulo) */}
           <div className="category-progress">
-            <h3>Progreso por Categoría</h3>
-            {history?.stats?.byCategory.map((cat: any) => (
-              <div key={cat.category} className="category-item">
-                <div className="category-header">
-                  <span className="category-name">{cat.category}</span>
-                  <span className="category-count">{cat.count} cursos</span>
+            <h3>Progreso por Módulo</h3>
+            {history?.stats?.byCategory.map((cat: any) => {
+              // Si el backend nos devuelve totalCourses, usamos ese valor para el porcentaje.
+              const total = typeof cat.totalCourses === 'number' && cat.totalCourses > 0 ? cat.totalCourses : (history.stats.totalCourses || 1);
+              const percent = total > 0 ? Math.round((cat.count / total) * 100) : 0;
+              return (
+                <div key={cat.category} className="category-item">
+                  <div className="category-header">
+                    <span className="category-name">{cat.category}</span>
+                    <span className="category-count">{cat.count} / {total} cursos</span>
+                  </div>
+                  <div className="category-bar">
+                    <div 
+                      className="category-fill"
+                      style={{ 
+                        width: `${percent}%`,
+                        backgroundColor: getModuleColor(cat.category)
+                      }}
+                    />
+                  </div>
+                  <div className="category-date">
+                    Último curso completado: {cat.lastCompleted ? new Date(cat.lastCompleted).toLocaleDateString() : '—'}
+                  </div>
+
+                  {/* Lista de cursos completados por módulo */}
+                  {Array.isArray(cat.completedCourses) && cat.completedCourses.length > 0 && (
+                    <div className="completed-courses">
+                      <h4>Cursos completados</h4>
+                      <ul>
+                        {cat.completedCourses.map((c: any) => (
+                          <li key={c.id}><a href={`/courses/${c.id}`}>{c.title || 'Curso'}</a></li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
-                <div className="category-bar">
-                  <div 
-                    className="category-fill"
-                    style={{ 
-                      width: `${(cat.count / (history.stats.totalCourses || 1)) * 100}%`,
-                      backgroundColor: getCategoryColor(cat.category)
-                    }}
-                  />
-                </div>
-                <div className="category-date">
-                  Último curso: {new Date(cat.lastCompleted).toLocaleDateString()}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
 

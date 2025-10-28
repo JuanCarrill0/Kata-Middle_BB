@@ -4,7 +4,7 @@ import { User } from '../types';
 type AuthStore = {
   token: string | null;
   user: User | null;
-  setAuth: (token: string | null, user: User | null) => void;
+  setAuth: (token: string | null, user: User | null, force?: boolean) => void;
   logout: () => void;
 }
 
@@ -20,16 +20,16 @@ const getStoredAuth = () => {
 
 export const useAuthStore = create<AuthStore>((set, get) => ({
   ...getStoredAuth(),
-  setAuth: (token, user) => {
+  setAuth: (token, user, force = false) => {
     // Log to help diagnose unexpected repeated calls
     // eslint-disable-next-line no-console
-    console.log('[auth] setAuth called', { token, user });
+    console.log('[auth] setAuth called', { token, user, force });
 
     const current = get();
-    // Avoid updating store if values didn't change
+    // Avoid updating store if values didn't change unless force is true
     const sameToken = current.token === token;
     const sameUser = JSON.stringify(current.user) === JSON.stringify(user);
-    if (sameToken && sameUser) return;
+    if (!force && sameToken && sameUser) return;
 
     if (token && user) {
       localStorage.setItem('token', token);

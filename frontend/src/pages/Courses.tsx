@@ -31,21 +31,19 @@ const Courses = () => {
       <h1 className="courses-title">Cursos Disponibles</h1>
       <div className="courses-grid">
         {courseList.map((course: Course) => {
-          // Resolve image URL with fallback to a generic placeholder in /public
-          const resolveImage = (img?: string) => {
-            if (!img) return `${import.meta.env.BASE_URL}default-badge.png`;
-            // If it's already an absolute URL, return as-is
-            if (/^https?:\/\//i.test(img)) return img;
-            return `${import.meta.env.VITE_MINIO_URL}/${img}`;
-          };
+          // (no thumbnail) we use an illustration instead
 
           return (
           <div className="course-card" key={course.id}>
-            <img
-              className="course-image"
-              src={resolveImage(course.imageUrl)}
-              alt={course.title}
-            />
+            <div className="course-illustration" aria-hidden="true">
+              {/* Libro SVG estilizado como representación del curso */}
+              <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 5.5C3 4.67157 3.67157 4 4.5 4H19" stroke="#1976d2" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M3 19.5C3 18.6716 3.67157 18 4.5 18H19" stroke="#1976d2" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M19 4v14" stroke="#1976d2" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M8 7h8v10H8z" fill="#e3f2fd" stroke="#1976d2" strokeWidth="1"/>
+              </svg>
+            </div>
             <div className="course-content">
               <h2 className="course-title">{course.title}</h2>
               <p className="course-description">

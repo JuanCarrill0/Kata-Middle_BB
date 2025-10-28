@@ -9,29 +9,47 @@ const router = Router();
 // obtener perfil de usuario
 router.get('/profile', auth, async (req, res) => {
   try {
+    // Poblar completedCourses y badges (con su curso) para devolver al frontend
     const user = await User.findById(req.user.id)
       .populate('completedCourses')
-      .populate('badges');
+      .populate({ path: 'badges', populate: { path: 'course', select: 'title' } });
     
     if (!user) {
       return res.status(404).json({ message: 'Usuario no encontrado' });
     }
+
+    // Mapear insignias a formato amigable para frontend
+    const mappedBadges = (user.badges || []).map((b: any) => {
+      // b puede ser un ObjectId o un documento poblado
+      const badge = b && b._id ? b : null;
+      if (!badge) return null;
+      // Buscar la entrada earnedBy de este usuario en la insignia para obtener earnedAt
+      const earnedEntry = Array.isArray(badge.earnedBy) ? badge.earnedBy.find((eb: any) => String(eb.user) === String(user._id)) : null;
+      return {
+        id: badge._id,
+        name: badge.name,
+        description: badge.description,
+        imageUrl: badge.image || (`/badges/${badge._id}`),
+        courseId: badge.course ? String(badge.course) : null,
+        earnedAt: earnedEntry ? earnedEntry.earnedAt : null,
+      };
+    }).filter(Boolean);
 
     res.json({
       id: user._id,
       email: user.email,
       name: user.name,
       role: user.role,
-      completedCourses: user.completedCourses,
-      badges: user.badges,
+      completedCourses: (user.completedCourses || []).map((c: any) => String(c)),
+      badges: mappedBadges,
       subscribedModules: (user.subscribedModules || []).map((m: any) => m.toString()),
       notifications: (user.notifications || []).map(n => ({
-      message: n.message,
-      link: n.link,
-      module: n.module,
-      course: n.course,
-      read: n.read,
-      createdAt: n.createdAt,
+        message: n.message,
+        link: n.link,
+        module: n.module,
+        course: n.course,
+        read: n.read,
+        createdAt: n.createdAt,
       })),
       progress: (user.progress || []).map((p: any) => ({
         courseId: p.courseId.toString(),

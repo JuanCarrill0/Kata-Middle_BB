@@ -89,3 +89,72 @@
   font-size: 0.875rem;
   opacity: 0.9;
 }
+
+.category-progress {
+  margin-top: 1.5rem;
+}
+
+.category-item {
+  margin-bottom: 1rem;
+}
+
+.category-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.category-name {
+  font-weight: 600;
+}
+
+.category-count {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.category-bar {
+  height: 10px;
+  background: #eef2ff;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.category-fill {
+  height: 100%;
+  transition: width 0.25s ease;
+}
+
+.category-date {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.completed-courses {
+  margin-top: 0.75rem;
+}
+
+.completed-courses h4 {
+  margin: 0.5rem 0;
+  font-size: 0.95rem;
+}
+
+.completed-courses ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.completed-courses li {
+  margin-bottom: 0.25rem;
+}
+
+.completed-courses a {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+.completed-courses a:hover {
+  text-decoration: underline;
+}

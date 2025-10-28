@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { coursesApi, usersApi } from '../services/api';
+import { coursesApi, usersApi, historyApi } from '../services/api';
 import { notifications } from '../services/notifications';
 import { useAuthStore } from '../stores/auth';
 import './CourseDetail.css';
@@ -26,27 +26,38 @@ export default function CourseDetail() {
 
   const course = courseResponse?.data;
 
-  const resolveImage = (img?: string) => {
-    if (!img) return `${import.meta.env.BASE_URL}default-badge.png`;
-    if (/^https?:\/\//i.test(img)) return img;
-    return `${import.meta.env.VITE_MINIO_URL}/${img}`;
-  };
+  // (no thumbnail) we use an illustration instead
 
   const moduleId = (course as any)?.module?.id || (course as any)?.module || (course as any)?.category || '';
   const [subscribed, setSubscribed] = useState<boolean>(() => {
     return !!user?.subscribedModules?.includes(moduleId);
   });
 
+  // Local UI state to avoid requiring multiple clicks and to provide optimistic updates
+  const [loadingChapters, setLoadingChapters] = useState<Record<string, boolean>>({});
+  const [optimisticCompleted, setOptimisticCompleted] = useState<Record<string, boolean>>({});
+  // Ref for synchronous in-flight checks to avoid race where state hasn't updated yet
+  const inFlightRef = useRef<Record<string, boolean>>({});
+
   const completeMutation = useMutation((chapterId: string) => coursesApi.completeChapter(id!, chapterId), {
     onSuccess: (res: any) => {
-      const returnedUser = res?.data?.user;
-      if (returnedUser) {
+      // After completing a chapter, refresh the profile to ensure store/localStorage
+      // contains the canonical, populated user object (badges, completedCourses, progress)
+      (async () => {
         try {
-          setAuth(token, returnedUser as any);
+          const profileResp = await usersApi.getProfile();
+          // Force update to ensure local store/localStorage reflect server state
+          setAuth(token, profileResp.data as any, true);
         } catch (e) {
-          // ignore
+          // fallback to returned user if profile fetch fails
+          const returnedUser = res?.data?.user;
+          if (returnedUser) {
+            try {
+              setAuth(token, returnedUser as any, true);
+            } catch (err) {}
+          }
         }
-      }
+      })();
       queryClient.invalidateQueries(['course', id]);
       queryClient.invalidateQueries(['courses']);
       notifications.success('¡Capítulo completado!');
@@ -76,6 +87,19 @@ export default function CourseDetail() {
       notifications.error(error.response?.data?.message || 'Error al eliminar capítulo');
     }
   });
+
+  // Obtener el historial canonico del curso (si existe) para calcular progreso real
+  const { data: courseHistoryResp } = useQuery(['history', 'course', id],
+    () => (id ? historyApi.getCourseHistory(id) : Promise.resolve(null)),
+    {
+      enabled: !!id,
+      onError: (err: any) => {
+        // silencioso; seguimos mostrando datos locales si falla
+        console.warn('Could not fetch course history', err?.response?.data || err);
+      }
+    }
+  );
+  const courseHistory = courseHistoryResp?.data || null;
 
   // Keep subscribed state in sync when user or course changes
   useEffect(() => {
@@ -116,13 +140,47 @@ export default function CourseDetail() {
   });
 
   const isChapterCompleted = (chapterId: string) => {
+    // Check optimistic state first
+    if (optimisticCompleted[chapterId]) return true;
+    // If the course is marked completed in the user profile, consider all chapters completed
+    const courseIdStr = String(id);
+    const isCourseCompleted = !!(user?.completedCourses && user.completedCourses.includes(courseIdStr));
+    if (isCourseCompleted) return true;
+
+    // If the server-side history for this course reports this chapter completed, honor it
+    if (courseHistory && Array.isArray(courseHistory.completedChapters)) {
+      const histSet = new Set((courseHistory.completedChapters || []).map((ch: any) => String(ch.chapterId ? ch.chapterId : ch)));
+      if (histSet.has(chapterId)) return true;
+    }
+
     const prog = user?.progress?.find((p: any) => p.courseId === id || p.courseId === (id as any));
     if (!prog || !Array.isArray(prog.completedChapters)) return false;
-    return prog.completedChapters.includes(chapterId);
+    const set = new Set((prog.completedChapters || []).map((c: any) => String(c)));
+    return set.has(chapterId);
   };
 
-  const handleCompleteChapter = (chapterId: string) => {
-    completeMutation.mutate(chapterId);
+  const handleCompleteChapter = async (chapterId: string) => {
+    if (isChapterCompleted(chapterId)) return; // already completed
+
+    // synchronous in-flight guard (ref) to prevent race where state hasn't flushed yet
+    if (inFlightRef.current[chapterId]) return;
+    inFlightRef.current[chapterId] = true;
+
+    // Optimistically mark as completed in UI
+    setOptimisticCompleted((s) => ({ ...s, [chapterId]: true }));
+    setLoadingChapters((s) => ({ ...s, [chapterId]: true }));
+
+    try {
+      await completeMutation.mutateAsync(chapterId);
+      // Success will update user via onSuccess and invalidate queries
+    } catch (e) {
+      // rollback optimistic flag on error
+      setOptimisticCompleted((s) => { const copy = { ...s }; delete copy[chapterId]; return copy; });
+    } finally {
+      setLoadingChapters((s) => { const copy = { ...s }; delete copy[chapterId]; return copy; });
+      // clear in-flight ref
+      delete inFlightRef.current[chapterId];
+    }
   };
 
   if (isLoading || !course) {
@@ -130,14 +188,35 @@ export default function CourseDetail() {
   }
 
   const progress = user?.progress?.find((p: any) => p.courseId === id || p.courseId === (id as any));
-  const progressPercentage = progress ? (progress.completedChapters.length / course.chapters.length) * 100 : 0;
+  // If the course is in completedCourses, show 100% progress
+  const courseIdStr = String(id);
+  const isCourseCompleted = !!(user?.completedCourses && user.completedCourses.includes(courseIdStr));
+  // Compute progress percentage but include optimistic completions so UI updates immediately
+  const baseCompleted = progress ? (progress.completedChapters.length) : 0;
+  const progSet = new Set((progress && Array.isArray(progress.completedChapters) ? progress.completedChapters.map((c: any) => String(c)) : []));
+  const optimisticExtra = Object.keys(optimisticCompleted).filter(k => optimisticCompleted[k] && !progSet.has(k)).length;
+  const completedCount = baseCompleted + optimisticExtra;
+
+  // Also consider server-side history if available
+  const histCompletedCount = courseHistory && Array.isArray(courseHistory.completedChapters) ? courseHistory.completedChapters.length : 0;
+  const histCompleted = courseHistory && courseHistory.completedAt;
+
+  const effectiveCompleted = Math.max(completedCount, histCompletedCount);
+  const progressPercentage = (isCourseCompleted || histCompleted) ? 100 : (course.chapters.length > 0 ? (effectiveCompleted / course.chapters.length) * 100 : 0);
 
   return (
     <div className="course-detail">
       <div className="course-grid">
         {/* Información del curso */}
         <div className="course-info">
-          <img src={resolveImage(course.imageUrl)} alt={course.title} />
+          <div className="course-illustration" aria-hidden="true">
+            <svg width="160" height="120" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 5.5C3 4.67157 3.67157 4 4.5 4H19" stroke="#1976d2" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M3 19.5C3 18.6716 3.67157 18 4.5 18H19" stroke="#1976d2" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M19 4v14" stroke="#1976d2" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M8 7h8v10H8z" fill="#e3f2fd" stroke="#1976d2" strokeWidth="1"/>
+            </svg>
+          </div>
           <h1>{course.title}</h1>
           {user && (
             <div style={{ marginTop: 8 }}>
@@ -241,9 +320,10 @@ export default function CourseDetail() {
                   <button
                     className={`complete-button ${isChapterCompleted(chapterId) ? 'completed' : ''}`}
                     onClick={() => handleCompleteChapter(chapterId)}
-                    disabled={isChapterCompleted(chapterId)}
+                    disabled={isChapterCompleted(chapterId) || !!loadingChapters[chapterId]}
+                    aria-disabled={isChapterCompleted(chapterId) || !!loadingChapters[chapterId]}
                   >
-                    {isChapterCompleted(chapterId) ? 'Completado' : 'Marcar como completado'}
+                    {loadingChapters[chapterId] ? 'Procesando...' : (isChapterCompleted(chapterId) ? 'Completado' : 'Marcar como completado')}
                   </button>
                 </div>
               </div>

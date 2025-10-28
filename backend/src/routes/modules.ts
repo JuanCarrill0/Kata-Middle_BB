@@ -8,8 +8,26 @@ const router = Router();
 // Listar modulos
 router.get('/', async (req, res) => {
   try {
-    const modules = await Module.find().sort({ name: 1 });
-    res.json(modules);
+    // Fetch modules
+    const modules = await Module.find().sort({ name: 1 }).lean();
+
+    // Aggregate course counts per module
+    const counts = await Course.aggregate([
+      { $group: { _id: '$module', count: { $sum: 1 } } }
+    ]);
+
+    const countsMap: Record<string, number> = {};
+    counts.forEach((c: any) => {
+      if (c._id) countsMap[String(c._id)] = c.count;
+    });
+
+    // Attach coursesCount to each module (default 0)
+    const modulesWithCounts = modules.map((m: any) => {
+      const idStr = String(m._id || m.id);
+      return { ...m, coursesCount: countsMap[idStr] || 0 };
+    });
+
+    res.json(modulesWithCounts);
   } catch (error) {
     res.status(500).json({ message: 'Error obteniendo modulos' });
   }
@@ -75,6 +93,16 @@ router.delete('/:id', auth, async (req, res) => {
 
 // Obtener cursos en un módulo por ID de módulo
 router.get('/:id/cursos', async (req, res) => {
+  try {
+    const cursos = await Course.find({ module: req.params.id }).populate('badge').populate('createdBy', 'name email');
+    res.json(cursos);
+  } catch (error) {
+    res.status(500).json({ message: 'Error obteniendo cursos para el módulo' });
+  }
+});
+
+// Backwards-compatible route: English path used by frontend
+router.get('/:id/courses', async (req, res) => {
   try {
     const cursos = await Course.find({ module: req.params.id }).populate('badge').populate('createdBy', 'name email');
     res.json(cursos);

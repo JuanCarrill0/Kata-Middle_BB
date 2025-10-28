@@ -43,14 +43,18 @@
   padding: 1.5rem;
 }
 
-.course-image {
+.course-illustration {
   width: 100%;
   height: 200px;
-  object-fit: cover;
-  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #f5f9ff 0%, #ffffff 100%);
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
+  margin-bottom: 1rem;
 }
+.course-illustration svg { width: 96px; height: 72px; }
 
 .course-title {
   font-size: 1.25rem;

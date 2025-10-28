@@ -14,7 +14,7 @@ export default function AddCourse() {
   const [thumbnail, setThumbnail] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Guard: only admin or teacher
+  // solo admin o teacher
   if (!user || (user.role !== 'admin' && user.role !== 'teacher')) {
     return <div style={{ padding: 20 }}>No autorizado</div>;
   }
@@ -25,8 +25,8 @@ export default function AddCourse() {
     const form = new FormData();
     form.append('title', title);
     form.append('description', description);
-    // If we're creating the course from within a module page, send the module id.
-    // Otherwise send a legacy category string for backward compatibility.
+    // Si creamos el curso desde la página de un módulo, enviar el id del módulo.
+    // De lo contrario, enviar una categoría legada para compatibilidad hacia atrás.
     if (moduleId) {
       form.append('module', moduleId);
     } else {
@@ -38,13 +38,13 @@ export default function AddCourse() {
       const response = await coursesApi.create(form);
       const createdCourse = response.data;
       notifications.success('Curso creado');
-      // Mongoose returns _id; prefer _id but fall back to id if present
+      // Mongoose devuelve _id; preferir _id pero usar id si existe
       const courseId = (createdCourse as any)._id || (createdCourse as any).id;
       if (courseId) {
-        // Redirect to add chapter immediately so teacher can upload materials
+        // Redirigir a añadir capítulo inmediatamente para que el profesor pueda subir materiales
         navigate(`/courses/${courseId}/add-chapter`);
       } else {
-        // Fallback: go back to module listing
+        // En caso contrario: volver al listado de módulos
         navigate(moduleId ? `/modules/${moduleId}` : '/courses');
       }
     } catch (err: any) {
@@ -66,11 +66,6 @@ export default function AddCourse() {
         <div>
           <label>Descripción</label>
           <textarea value={description} onChange={(e) => setDescription(e.target.value)} required />
-        </div>
-
-        <div>
-          <label>Miniatura</label>
-          <input type="file" accept="image/*" onChange={(e) => setThumbnail(e.target.files?.[0] ?? null)} />
         </div>
 
         <div>
