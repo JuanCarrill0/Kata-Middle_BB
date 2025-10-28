@@ -37,6 +37,7 @@ export default function CourseDetail() {
   const [loadingChapters, setLoadingChapters] = useState<Record<string, boolean>>({});
   const [optimisticCompleted, setOptimisticCompleted] = useState<Record<string, boolean>>({});
   const [preview, setPreview] = useState<{ url: string; type: string; title?: string } | null>(null);
+  const previewCloseRef = useRef<HTMLButtonElement | null>(null);
   // Ref for synchronous in-flight checks to avoid race where state hasn't updated yet
   const inFlightRef = useRef<Record<string, boolean>>({});
 
@@ -67,6 +68,23 @@ export default function CourseDetail() {
       notifications.error(error.response?.data?.message || 'Error al marcar como completado');
     }
   });
+
+  // Accessibility: close preview with ESC and focus management
+  useEffect(() => {
+    if (!preview) return;
+    const prevActive = document.activeElement as HTMLElement | null;
+    // focus the close button when modal opens
+    setTimeout(() => previewCloseRef.current?.focus(), 0);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPreview(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      // return focus
+      try { prevActive?.focus(); } catch (_) {}
+    };
+  }, [preview]);
 
   const deleteCourseMutation = useMutation(() => coursesApi.delete(id!), {
     onSuccess: () => {
@@ -341,18 +359,31 @@ export default function CourseDetail() {
       {/* Preview modal/overlay for resources */}
       {preview && (
         <div className="preview-overlay" onClick={() => setPreview(null)}>
-          <div className="preview-content" onClick={(e) => e.stopPropagation()}>
+          <div className="preview-content" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={preview.title || 'Vista previa'}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3 style={{ margin: 0 }}>{preview.title || 'Vista previa'}</h3>
-              <button onClick={() => setPreview(null)} style={{ marginLeft: 12 }}>Cerrar</button>
+              <button ref={previewCloseRef} onClick={() => setPreview(null)} style={{ marginLeft: 12 }}>Cerrar</button>
             </div>
             <div style={{ marginTop: 12 }}>
-              {preview.type === 'video' ? (
+              {preview.type === 'video' && (
                 <video className="preview-video" controls>
                   <source src={preview.url} type="video/mp4" />
                   Tu navegador no soporta video.
                 </video>
-              ) : (
+              )}
+              {preview.type === 'image' && (
+                <img src={preview.url} alt={preview.title || 'Imagen'} style={{ width: '100%', height: 'auto', borderRadius: 4 }} />
+              )}
+              {preview.type === 'pdf' && (
+                // embed PDF; many browsers support displaying PDFs in an embed/iframe
+                <embed className="preview-iframe" src={preview.url} type="application/pdf" />
+              )}
+              {preview.type === 'presentation' && (
+                // try iframe for slides (if hosted), fallback to embed
+                <iframe className="preview-iframe" src={preview.url} title={preview.title || 'presentacion-preview'} />
+              )}
+              {['pdf', 'presentation', 'image', 'video'].indexOf(preview.type) === -1 && (
+                // fallback to iframe for unknown types
                 <iframe className="preview-iframe" src={preview.url} title={preview.title || 'resource-preview'} />
               )}
             </div>

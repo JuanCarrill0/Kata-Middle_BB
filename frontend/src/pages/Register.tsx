@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/auth';
-import { RegisterData, authApi } from '../services/api';
+import { RegisterDataExtended, authApi } from '../services/api';
 import { notifications } from '../services/notifications';
 import './Register.css';
 
 export default function Register() {
-  const [formData, setFormData] = useState<RegisterData>({
+  const [formData, setFormData] = useState<RegisterDataExtended>({
     name: '',
     email: '',
     password: '',
+    role: 'user',
   });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -95,6 +96,30 @@ export default function Register() {
                 disabled={loading}
               />
             </div>
+
+              <div className="form-field">
+                <label style={{ display: 'block', marginBottom: 6 }}>Registrarse como</label>
+                <label style={{ marginRight: 12 }}>
+                  <input
+                    type="radio"
+                    name="role"
+                    value="user"
+                    checked={formData.role === 'user'}
+                    onChange={handleChange}
+                    disabled={loading}
+                  /> Usuario
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="role"
+                    value="teacher"
+                    checked={formData.role === 'teacher'}
+                    onChange={handleChange}
+                    disabled={loading}
+                  /> Profesor
+                </label>
+              </div>
 
             <button
               type="submit"

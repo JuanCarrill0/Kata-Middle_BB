@@ -16,7 +16,7 @@ const router = Router();
 // Registro de usuarios
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, name } = req.body;
+  const { email, password, name, role } = req.body;
 
     // Verificar si el usuario ya existe
     const userExists = await User.findOne({ email });
@@ -27,11 +27,14 @@ router.post('/register', async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Crear usuario (permitimos rol 'teacher' o por defecto 'user')
+    const userRole = role === 'teacher' ? 'teacher' : 'user';
     // Crear usuario
     const user = await User.create({
       email,
       password: hashedPassword,
       name,
+      role: userRole,
     });
 
     // Generar token

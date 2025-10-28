@@ -25,10 +25,15 @@ export interface LoginData {
 export interface RegisterData extends LoginData {
   name: string;
 }
+export type UserRole = 'user' | 'teacher';
+
+export interface RegisterDataExtended extends RegisterData {
+  role?: UserRole;
+}
 
 export const authApi = {
   login: (data: LoginData) => api.post<{ token: string; user: User }>('/api/auth/login', data),
-  register: (data: RegisterData) => api.post<{ token: string; user: User }>('/api/auth/register', data),
+  register: (data: RegisterDataExtended) => api.post<{ token: string; user: User }>('/api/auth/register', data),
   me: () => api.get<User>('/api/auth/me'),
 };
 

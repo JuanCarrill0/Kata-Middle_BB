@@ -67,16 +67,6 @@ export default function ModuleCourses() {
     return Array.isArray(moduleCoursesData) ? moduleCoursesData : [];
   })();
 
-  // (no thumbnail) we use an illustration instead
-
-  const getProgress = (courseId: string) => {
-    if (!user?.progress) return 0;
-    const courseProgress = user.progress.find((p) => p.courseId === courseId);
-    if (!courseProgress) return 0;
-    const course = courses?.find(c => c.id === courseId);
-    return (courseProgress.completedChapters.length / (course?.chapters?.length ?? 1)) * 100;
-  };
-
   // Determine module title and missing module handling
   let moduleTitle: string | null = null;
   if (isLegacy) {
@@ -125,17 +115,6 @@ export default function ModuleCourses() {
                 <p className="course-description">
                   {course.description}
                 </p>
-                <div className="progress-container">
-                  <div className="progress-bar">
-                    <div
-                      className="progress-fill"
-                      style={{ width: `${getProgress(course.id)}%` }}
-                    />
-                  </div>
-                  <span className="progress-text">
-                    Progreso: {Math.round(getProgress(course.id))}%
-                  </span>
-                </div>
               </div>
               </div>
 
