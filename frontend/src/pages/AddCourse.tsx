@@ -69,6 +69,18 @@ export default function AddCourse() {
         </div>
 
         <div>
+          <label>Miniatura (opcional)</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const f = e.target.files && e.target.files[0] ? e.target.files[0] : null;
+              setThumbnail(f);
+            }}
+          />
+        </div>
+
+        <div>
           <button type="submit" disabled={loading}>{loading ? 'Creando...' : 'Crear Curso'}</button>
         </div>
       </form>
