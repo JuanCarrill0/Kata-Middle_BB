@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Redirecting...</title>
+    <script>
+      // SPA fallback for static hosts (GitHub Pages, Surge, etc.)
+      // If the server returns this 404 page for a deep link, rewrite to root and let the SPA router handle the path.
+      (function () {
+        try {
+          var path = location.pathname + location.search + location.hash;
+          // keep the path so the SPA router can parse it after index.html loads
+          var index = '/';
+          // load the root index and then restore the path using replaceState
+          fetch(index, { cache: 'no-store' })
+            .then(function (res) { return res.text(); })
+            .then(function (html) {
+              document.open();
+              document.write(html);
+              document.close();
+              // restore the original path so the SPA can route to it
+              history.replaceState({}, '', path);
+            })
+            .catch(function () {
+              // fallback: just redirect to root
+              location.replace(index);
+            });
+        } catch (e) {
+          try { location.replace('/'); } catch (_) {}
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    Redirecting...
+  </body>
+</html>

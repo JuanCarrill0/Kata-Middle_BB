@@ -120,7 +120,7 @@ export default function Profile() {
                       <h4>Cursos completados</h4>
                       <ul>
                         {cat.completedCourses.map((c: any) => (
-                          <li key={c.id}><a href={`/courses/${c.id}`}>{c.title || 'Curso'}</a></li>
+                          <li key={c.id}>{c.title || 'Curso'}</li>
                         ))}
                       </ul>
                     </div>
