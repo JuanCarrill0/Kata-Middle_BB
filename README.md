@@ -1,51 +1,52 @@
 # Portal de Capacitaciones Interactivo
 
-Plataforma de capacitaciones para el CoE de Desarrollo donde los colaboradores pueden gestionar y acceder a capacitaciones técnicas, obteniendo insignias por sus logros.
+Plataforma destinada a la gestión y acceso a capacitaciones técnicas del CoE de Desarrollo.  
+Permite administrar cursos, registrar el progreso de los usuarios y otorgar insignias automáticas por logros alcanzados.
 
 ## Características Principales
 
-- 👤 Autenticación de usuarios con correo corporativo
-- ⬆️ Subida de contenido multimedia (videos, PDFs, presentaciones)
-- 📚 Módulos de capacitación:
-  - Fullstack (Frontend, Backend)
-  - APIs e Integraciones
-  - Cloud
-  - Data Engineer
-- 🎓 Seguimiento de progreso
-- 🏅 Sistema de insignias automáticas
-- 📑 Organización por capítulos
-- 🔔 Sistema de notificaciones
+- 👤 Autenticación mediante correo corporativo  
+- ⬆️ Carga de contenido multimedia (videos, documentos PDF, presentaciones)  
+- 📚 Módulos de capacitación:  
+  - Fullstack (Frontend, Backend)  
+  - APIs e Integraciones  
+  - Cloud  
+  - Data Engineer  
+- 🎓 Seguimiento de progreso de los usuarios  
+- 🏅 Sistema automatizado de insignias  
+- 📑 Organización jerárquica por capítulos  
+- 🔔 Sistema de notificaciones  
 
-## Tecnologías
+## Tecnologías Utilizadas
 
-- Frontend: React + TypeScript
-- Backend: Node.js + Express + TypeScript
-- Base de datos: MongoDB
-* Almacenamiento: GridFS (MongoDB) para documentos y archivos; MinIO no se usa en la versión final
-- Emails: Mailhog (desarrollo)
-- Contenedores: Docker
+- **Frontend:** React + TypeScript  
+- **Backend:** Node.js + Express + TypeScript  
+- **Base de datos:** MongoDB  
+- **Almacenamiento:** GridFS (MongoDB) para documentos y archivos  
+  *(MinIO no se utiliza en la versión final)*  
+- **Contenedores:** Docker  
 
 ## Requisitos
 
-- Node.js v18+
-- Docker y Docker Compose
-- MongoDB
-*(MinIO removed — storage now uses GridFS/DB)
+- Node.js v18 o superior  
+- Docker y Docker Compose  
+- MongoDB  
+*(MinIO eliminado — el almacenamiento se gestiona con GridFS/DB)*  
 
 ## Configuración del Entorno de Desarrollo
 
-1. Clonar el repositorio
-2. Configurar variables de entorno (ver `.env.example`)
-3. Iniciar servicios con Docker Compose:
+1. Clonar el repositorio.  
+2. Configurar las variables de entorno según el archivo `.env.example`.  
+3. Iniciar los servicios con Docker Compose:
    ```bash
    docker-compose up -d
    ```
-4. Instalar dependencias del backend:
+4. Instalar las dependencias del backend:
    ```bash
    cd backend
    npm install
    ```
-5. Instalar dependencias del frontend:
+5. Instalar las dependencias del frontend:
    ```bash
    cd frontend
    npm install
@@ -56,42 +57,40 @@ Plataforma de capacitaciones para el CoE de Desarrollo donde los colaboradores p
 ```
 .
 ├── frontend/               # Aplicación React
-├── backend/               # API Node.js
-├── docker/               # Configuraciones Docker
-└── docs/                 # Documentación
+├── backend/                # API Node.js
+├── docker/                 # Configuraciones Docker
+└── docs/                   # Documentación
 ```
 
-## Diagramas y entregables
+## Diagramas y Entregables
 
-Incluimos un diagrama de arquitectura y materiales en la carpeta `entregables_documentacion`. Puedes ver el diagrama principal a continuación:
+El diagrama de arquitectura y los materiales de documentación se encuentran en la carpeta `entregables_documentacion`.  
 
 ![Diagrama de arquitectura](./entregables_documentacion/Diagrama%20arquitectura%20Kata.png)
 
-## Scripts de base de datos (seed)
+## Scripts de Base de Datos (Seed)
 
-En `backend/src/scripts/` encontrarás scripts para poblar la base de datos con datos de ejemplo:
+Los scripts para poblar la base de datos con datos de ejemplo están ubicados en `backend/src/scripts/`.
 
-- `backend/src/scripts/seed-db.ts` — script TypeScript que crea módulos, usuarios (teacher y student), cursos, badges y entradas en `history` para desarrollo.
+- **Archivo principal:** `seed-db.ts`  
+  Este script genera módulos, usuarios (roles *teacher* y *student*), cursos, insignias y registros de historial de progreso para el entorno de desarrollo.
 
-Cómo ejecutar el seed (desde la carpeta `backend`):
+### Ejecución del Script
 
-1. Instala dependencias si no lo hiciste:
+1. Instalar dependencias:  
+   ```powershell
+   cd backend
+   npm install
+   ```
+2. Ejecutar el script con **ts-node**:  
+   ```powershell
+   npx ts-node src/scripts/seed-db.ts
+   ```
+3. Opcionalmente, utilizar **ts-node-dev** para recarga automática:  
+   ```powershell
+   npx ts-node-dev --respawn --transpile-only src/scripts/seed-db.ts
+   ```
 
-```powershell
-cd backend
-npm install
-```
-
-2. Ejecuta el script con ts-node (recomendado para desarrollo):
-
-```powershell
-npx ts-node src/scripts/seed-db.ts
-```
-
-Si prefieres, puedes usar `ts-node-dev` para recarga automática:
-
-```powershell
-npx ts-node-dev --respawn --transpile-only src/scripts/seed-db.ts
-```
-
-Advertencia: los scripts de seed limpian colecciones relevantes (Module, User, Course, Badge, History) antes de insertar datos; no los ejecutes en producción.
+> ⚠️ **Advertencia:**  
+> Los scripts de inicialización (*seed*) eliminan las colecciones relacionadas (`Module`, `User`, `Course`, `Badge`, `History`) antes de insertar los datos de ejemplo.  
+> No deben ejecutarse en entornos de producción.
