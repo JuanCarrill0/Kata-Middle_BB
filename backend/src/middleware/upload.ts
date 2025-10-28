@@ -7,7 +7,7 @@ import mongoose from 'mongoose';
 // Reemplazar uuid con una función personalizada
 const generateId = () => crypto.randomBytes(16).toString('hex');
 
-// Configuración del cliente MinIO - usar localhost cuando se ejecuta fuera de Docker
+// Configure MinIO client - use localhost when running outside Docker
 const isDocker = process.env.RUNNING_IN_DOCKER === 'true';
 export const minioClient = new Client({
   endPoint: process.env.MINIO_ENDPOINT || (isDocker ? 'minio' : 'localhost'),
@@ -17,7 +17,7 @@ export const minioClient = new Client({
   secretKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
 });
 
-// Crear bucket si no existe
+// Ensure bucket exists
 const bucketName = process.env.MINIO_BUCKET || 'capacitaciones';
 minioClient.bucketExists(bucketName, (err, exists) => {
   if (err) {
@@ -36,10 +36,10 @@ minioClient.bucketExists(bucketName, (err, exists) => {
   }
 });
 
-// Configuración de Multer para la subida de archivos
+// Configure Multer for file upload
 const storage = multer.memoryStorage();
 
-// Filtro de archivos permitidos
+// File filter
 const fileFilter = (req: any, file: any, cb: any) => {
   const allowedTypes = [
     'image/jpeg',
@@ -69,13 +69,15 @@ export const upload = {
   fields: (fields: { name: string, maxCount: number }[]) => multerUpload.fields(fields),
 };
 
-// Middleware para subir archivos a MinIO o GridFS
+// Middleware to upload files: videos -> MinIO; others -> GridFS
 export const uploadToMinio = async (req: any, res: any, next: any) => {
   if (!req.files) return next();
 
   try {
-    // Accesso a la base de datos de MongoDB
+    // Access the raw MongoDB db for GridFS
     const db = mongoose.connection.db;
+    // use dynamic require to avoid TS types issues
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { GridFSBucket } = require('mongodb');
     const bucket = new GridFSBucket(db, { bucketName: 'uploads' });
 
@@ -84,7 +86,7 @@ export const uploadToMinio = async (req: any, res: any, next: any) => {
         const isVideo = file.mimetype.startsWith('video/');
 
         if (isVideo) {
-          // subir con MinIO
+          // upload to MinIO
           const extension = path.extname(file.originalname);
           const filename = `${generateId()}${extension}`;
           await minioClient.putObject(
@@ -97,12 +99,12 @@ export const uploadToMinio = async (req: any, res: any, next: any) => {
           file.filename = filename;
           file.storage = 'minio';
         } else {
-          // almacenar en GridFS
+          // store in GridFS
           const uploadStream = bucket.openUploadStream(file.originalname, {
             contentType: file.mimetype,
           });
 
-          // escribe un buffer en el stream
+          // write buffer and await finish
           await new Promise<void>((resolve, reject) => {
             uploadStream.end(file.buffer, (err: any) => {
               if (err) return reject(err);
@@ -111,7 +113,7 @@ export const uploadToMinio = async (req: any, res: any, next: any) => {
           });
 
           const fileId = uploadStream.id as any;
-          // guardar el id de GridFS en el archivo
+          // store file id so it can be served later
           file.filename = fileId.toString();
           file.storage = 'gridfs';
         }

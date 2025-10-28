@@ -21,7 +21,7 @@ Plataforma de capacitaciones para el CoE de Desarrollo donde los colaboradores p
 - Frontend: React + TypeScript
 - Backend: Node.js + Express + TypeScript
 - Base de datos: MongoDB
-- Almacenamiento: MinIO
+* Almacenamiento: GridFS (MongoDB) para documentos y archivos; MinIO no se usa en la versión final
 - Emails: Mailhog (desarrollo)
 - Contenedores: Docker
 
@@ -30,7 +30,7 @@ Plataforma de capacitaciones para el CoE de Desarrollo donde los colaboradores p
 - Node.js v18+
 - Docker y Docker Compose
 - MongoDB
-- MinIO
+*(MinIO removed — storage now uses GridFS/DB)
 
 ## Configuración del Entorno de Desarrollo
 
@@ -60,3 +60,38 @@ Plataforma de capacitaciones para el CoE de Desarrollo donde los colaboradores p
 ├── docker/               # Configuraciones Docker
 └── docs/                 # Documentación
 ```
+
+## Diagramas y entregables
+
+Incluimos un diagrama de arquitectura y materiales en la carpeta `entregables_documentacion`. Puedes ver el diagrama principal a continuación:
+
+![Diagrama de arquitectura](./entregables_documentacion/Diagrama%20arquitectura%20Kata.png)
+
+## Scripts de base de datos (seed)
+
+En `backend/src/scripts/` encontrarás scripts para poblar la base de datos con datos de ejemplo:
+
+- `backend/src/scripts/seed-db.ts` — script TypeScript que crea módulos, usuarios (teacher y student), cursos, badges y entradas en `history` para desarrollo.
+
+Cómo ejecutar el seed (desde la carpeta `backend`):
+
+1. Instala dependencias si no lo hiciste:
+
+```powershell
+cd backend
+npm install
+```
+
+2. Ejecuta el script con ts-node (recomendado para desarrollo):
+
+```powershell
+npx ts-node src/scripts/seed-db.ts
+```
+
+Si prefieres, puedes usar `ts-node-dev` para recarga automática:
+
+```powershell
+npx ts-node-dev --respawn --transpile-only src/scripts/seed-db.ts
+```
+
+Advertencia: los scripts de seed limpian colecciones relevantes (Module, User, Course, Badge, History) antes de insertar datos; no los ejecutes en producción.
