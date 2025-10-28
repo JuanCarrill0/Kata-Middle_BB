@@ -5,6 +5,10 @@ export interface IUser extends Document {
   password: string;
   name: string;
   role: 'user' | 'admin' | 'teacher';
+  progress: {
+    courseId: Schema.Types.ObjectId;
+    completedChapters: Schema.Types.ObjectId[];
+  }[];
   completedCourses: Schema.Types.ObjectId[];
   badges: Schema.Types.ObjectId[];
   createdAt: Date;
@@ -34,7 +38,18 @@ const userSchema = new Schema<IUser>(
       enum: ['user', 'admin', 'teacher'],
       default: 'user',
     },
-    completedCourses: [{
+    progress: [{
+    courseId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Course',
+      required: true
+    },
+    completedChapters: [{
+      type: Schema.Types.ObjectId,
+      required: true
+    }]
+  }],
+  completedCourses: [{
       type: Schema.Types.ObjectId,
       ref: 'Course',
     }],

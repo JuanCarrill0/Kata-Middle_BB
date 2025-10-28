@@ -1,27 +1,37 @@
 import { useAuthStore } from '../stores/auth';
 import { useQuery } from '@tanstack/react-query';
-import { coursesApi } from '../services/api';
+import { historyApi } from '../services/api';
 import { notifications } from '../services/notifications';
 import BadgeCard from '../components/BadgeCard';
 import './Profile.css';
 
+import type { ApiHistory } from '../types/api';
+
+// Helpers
+const getCategoryColor = (category: string): string => {
+  const colors: { [key: string]: string } = {
+    'fullstack': '#4F46E5', // Indigo
+    'apis': '#10B981', // Emerald
+    'cloud': '#3B82F6', // Blue
+    'data': '#F59E0B', // Amber
+    'default': '#6B7280' // Gray
+  };
+  return colors[category] || colors.default;
+};
+
 export default function Profile() {
   const user = useAuthStore((state) => state.user);
 
-  const { data: coursesResponse } = useQuery(['courses'], coursesApi.getAll, {
-    onError: (error: any) => {
-      notifications.error(error.response?.data?.message || 'Error al cargar los cursos');
+  const { data: history } = useQuery<ApiHistory>(['history'], async () => {
+    const response = await historyApi.getUserHistory();
+    return response.data as ApiHistory;
+  }, {
+    onError: () => {
+      notifications.error('Error al cargar el historial');
     }
   });
 
-  const courses = coursesResponse?.data || [];
-
-  // Calcular estadísticas
-  const totalCourses = courses.length;
   const coursesStarted = user?.progress?.length || 0;
-  const completedChapters = user?.progress?.reduce((acc, curr) => 
-    acc + curr.completedChapters.length, 0) || 0;
-  const totalBadges = user?.badges?.length || 0;
 
   return (
     <div className="profile-container">
@@ -43,26 +53,51 @@ export default function Profile() {
           </div>
         </section>
 
-        {/* Estadísticas */}
+        {/* Estadísticas y Progreso */}
         <section className="profile-section">
-          <h2 className="section-title">Mis Estadísticas</h2>
+          <h2 className="section-title">Mi Progreso</h2>
           <div className="stats-grid">
             <div className="stat-card">
-              <div className="stat-value">{totalCourses}</div>
-              <div className="stat-label">Cursos Disponibles</div>
+              <div className="stat-value">{history?.stats?.totalCourses || 0}</div>
+              <div className="stat-label">Cursos Completados</div>
             </div>
             <div className="stat-card">
               <div className="stat-value">{coursesStarted}</div>
-              <div className="stat-label">Cursos Iniciados</div>
+              <div className="stat-label">Cursos en Progreso</div>
             </div>
             <div className="stat-card">
-              <div className="stat-value">{completedChapters}</div>
-              <div className="stat-label">Capítulos Completados</div>
+              <div className="stat-value">{history?.stats?.totalChapters || 0}</div>
+              <div className="stat-label">Capítulos Totales</div>
             </div>
             <div className="stat-card">
-              <div className="stat-value">{totalBadges}</div>
-              <div className="stat-label">Insignias Ganadas</div>
+              <div className="stat-value">{Math.round((history?.stats?.totalTime || 0) / 60)}</div>
+              <div className="stat-label">Horas de Estudio</div>
             </div>
+          </div>
+
+          {/* Progreso por Categoría */}
+          <div className="category-progress">
+            <h3>Progreso por Categoría</h3>
+            {history?.stats?.byCategory.map((cat: any) => (
+              <div key={cat.category} className="category-item">
+                <div className="category-header">
+                  <span className="category-name">{cat.category}</span>
+                  <span className="category-count">{cat.count} cursos</span>
+                </div>
+                <div className="category-bar">
+                  <div 
+                    className="category-fill"
+                    style={{ 
+                      width: `${(cat.count / (history.stats.totalCourses || 1)) * 100}%`,
+                      backgroundColor: getCategoryColor(cat.category)
+                    }}
+                  />
+                </div>
+                <div className="category-date">
+                  Último curso: {new Date(cat.lastCompleted).toLocaleDateString()}
+                </div>
+              </div>
+            ))}
           </div>
         </section>
 

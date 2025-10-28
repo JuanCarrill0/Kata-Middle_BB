@@ -1,5 +1,8 @@
 import { Router } from 'express';
 import { Course } from '../models/Course';
+import { User } from '../models/User';
+import { Badge } from '../models/Badge';
+import { History } from '../models/History';
 import { auth } from '../middleware/auth';
 import { upload, uploadToMinio, minioClient } from '../middleware/upload';
 import mongoose from 'mongoose';
@@ -120,10 +123,112 @@ router.post('/:courseId/chapters/:chapterId/complete', auth, async (req, res) =>
     const chapterExists = chapter || (course as any).chapters.find((c: any) => (c as any)._id?.toString() === chapterId || (c as any).id === chapterId);
     if (!chapterExists) return res.status(404).json({ message: 'Chapter not found' });
 
-    // NOTE: user progress tracking is not implemented in the User model yet.
-    // For now, accept the completion request and return success. This avoids 404s
-    // from the frontend when users mark chapters as completed.
-    return res.json({ message: 'Chapter marked completed' });
+    // Update user progress
+    const userId = req.user.id;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Find or create progress entry for this course
+    let courseProgress = user.progress.find(p => p.courseId.toString() === courseId);
+    if (!courseProgress) {
+      courseProgress = {
+        courseId: new mongoose.Types.ObjectId(courseId),
+        completedChapters: []
+      };
+      user.progress.push(courseProgress);
+    }
+
+    // Add chapter to completed chapters if not already completed
+    const chapterObjectId = new mongoose.Types.ObjectId(chapterId);
+    if (!courseProgress.completedChapters.includes(chapterObjectId)) {
+      courseProgress.completedChapters.push(chapterObjectId);
+    }
+
+    // Buscar o crear entrada en el historial
+    let history = await History.findOne({ user: userId, course: course._id });
+    if (!history) {
+      history = new History({
+        user: userId,
+        course: course._id,
+        category: course.category,
+        completedChapters: []
+      });
+    }
+
+    // Añadir capítulo completado al historial si no existe
+    const chapterInHistory = history.completedChapters.find(
+      ch => ch.chapterId.toString() === chapterId
+    );
+    
+    if (!chapterInHistory) {
+      const chapter = course.chapters.find(ch => 
+        (ch as any)._id.toString() === chapterId
+      );
+      
+      history.completedChapters.push({
+        chapterId: new mongoose.Types.ObjectId(chapterId),
+        completedAt: new Date(),
+        title: chapter?.title || 'Capítulo'
+      });
+    }
+
+    // Si todos los capítulos están completados
+    if (courseProgress.completedChapters.length === course.chapters.length) {
+      // Añadir curso a completedCourses si no está ya
+      if (!user.completedCourses.includes(course._id)) {
+        user.completedCourses.push(course._id);
+        
+        // Marcar fecha de finalización en el historial
+        history.completedAt = new Date();
+        
+        // Crear o actualizar la insignia del curso
+        let badge = await Badge.findOne({ course: course._id });
+        if (!badge) {
+          badge = await Badge.create({
+            name: `${course.title} - Completado`,
+            description: `Insignia otorgada por completar el curso ${course.title}`,
+            course: course._id
+          });
+        }
+
+        // Verificar si el usuario ya tiene la insignia
+        const hasEarned = badge.earnedBy.some(eb => eb.user.toString() === userId);
+        if (!hasEarned) {
+          // Otorgar la insignia al usuario
+          badge.earnedBy.push({
+            user: new mongoose.Types.ObjectId(userId),
+            earnedAt: new Date()
+          });
+          await badge.save();
+
+          // Añadir la insignia al usuario si no la tiene
+          if (!user.badges.includes(badge._id)) {
+            user.badges.push(badge._id);
+          }
+        }
+      }
+    }
+
+    await history.save();
+
+    await user.save();
+    
+    // Obtener datos actualizados del usuario con campos populados
+    const updatedUser = await User.findById(userId)
+      .populate({
+        path: 'badges',
+        populate: { path: 'course', select: 'title' }
+      })
+      .populate('completedCourses');
+
+    return res.json({ 
+      message: courseProgress.completedChapters.length === course.chapters.length
+        ? '¡Curso completado! Has ganado una insignia.'
+        : 'Capítulo completado',
+      user: updatedUser
+    });
   } catch (error: any) {
     console.error('Error marking chapter complete', error);
     return res.status(500).json({ message: error?.message || 'Error completing chapter' });

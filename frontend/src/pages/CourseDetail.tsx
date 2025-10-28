@@ -22,11 +22,19 @@ export default function CourseDetail() {
 
   const course = courseResponse?.data;
 
+  const setAuth = useAuthStore((state) => state.setAuth);
+  
   const completeMutation = useMutation(
     (chapterId: string) => coursesApi.completeChapter(id!, chapterId),
     {
-      onSuccess: () => {
+      onSuccess: (response) => {
+        // Actualizar el estado global del usuario con los datos actualizados
+        if (response.data.user) {
+          const token = localStorage.getItem('token');
+          setAuth(token, response.data.user);
+        }
         queryClient.invalidateQueries(['course', id]);
+        queryClient.invalidateQueries(['auth', 'me']); // Invalidar la consulta del usuario
         notifications.success('¡Capítulo completado!');
       },
       onError: (error: any) => {

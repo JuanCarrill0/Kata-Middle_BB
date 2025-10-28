@@ -43,3 +43,23 @@ export interface User {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface History {
+  userId: string;
+  stats: {
+    totalCourses: number;
+    totalChapters: number;
+    totalTime: number;
+    byCategory: {
+      category: string;
+      count: number;
+      lastCompleted: Date;
+    }[];
+  };
+  completions: {
+    courseId: string;
+    completedAt: Date;
+    category: string;
+    timeSpent: number;
+  }[];
+}

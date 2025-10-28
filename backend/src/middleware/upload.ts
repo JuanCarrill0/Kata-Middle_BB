@@ -7,9 +7,10 @@ import mongoose from 'mongoose';
 // Reemplazar uuid con una función personalizada
 const generateId = () => crypto.randomBytes(16).toString('hex');
 
-// Configure MinIO client
+// Configure MinIO client - use localhost when running outside Docker
+const isDocker = process.env.RUNNING_IN_DOCKER === 'true';
 export const minioClient = new Client({
-  endPoint: process.env.MINIO_ENDPOINT || 'minio',  // Usar el nombre del servicio en docker-compose
+  endPoint: process.env.MINIO_ENDPOINT || (isDocker ? 'minio' : 'localhost'),
   port: parseInt(process.env.MINIO_PORT || '9000'),
   useSSL: false,
   accessKey: process.env.MINIO_ACCESS_KEY || 'minioadmin',

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { Course, User } from '../types';
+import { ApiHistory } from '../types/api';
 
 /// <reference types="vite/client" />
 
@@ -42,12 +43,16 @@ export const coursesApi = {
   deleteChapter: (courseId: string, chapterId: string) => api.delete(`/api/courses/${courseId}/chapters/${chapterId}`),
   complete: (id: string) => api.post<{ message: string }>(`/api/courses/${id}/complete`),
   completeChapter: (courseId: string, chapterId: string) => 
-    api.post<{ message: string }>(`/api/courses/${courseId}/chapters/${chapterId}/complete`),
+    api.post<{ message: string, user: User }>(`/api/courses/${courseId}/chapters/${chapterId}/complete`),
 };
 
 export const usersApi = {
   getProfile: () => api.get<User>('/api/users/profile'),
   updateProfile: (data: FormData) => api.put<User>('/api/users/profile', data),
+};
+
+export const historyApi = {
+  getUserHistory: () => api.get<{ data: ApiHistory }>('/api/history/me'),
 };
 
 export default api;
