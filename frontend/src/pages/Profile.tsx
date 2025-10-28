@@ -33,19 +33,6 @@ export default function Profile() {
     }
   });
 
-  // Calcular cursos en progreso: deben tener al menos 1 capítulo completado
-  // y no aparecer en completedCourses
-  const coursesStarted = (user?.progress || []).filter((p: any) => {
-    try {
-      const pid = String(p.courseId || p.courseId);
-      const completed = ((user as any)?.completedCourses || []).some((cc: any) => String(cc) === pid);
-      const hasProgress = Array.isArray(p.completedChapters) && p.completedChapters.length > 0;
-      return !completed && hasProgress;
-    } catch (e) {
-      return false;
-    }
-  }).length || 0;
-
   return (
     <div className="profile-container">
       <h1 className="profile-title">Mi Perfil</h1>
@@ -73,10 +60,6 @@ export default function Profile() {
             <div className="stat-card">
               <div className="stat-value">{history?.stats?.totalCourses || 0}</div>
               <div className="stat-label">Cursos Completados</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-value">{coursesStarted}</div>
-              <div className="stat-label">Cursos en Progreso</div>
             </div>
             <div className="stat-card">
               <div className="stat-value">{history?.stats?.totalChapters || 0}</div>
