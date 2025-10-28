@@ -314,7 +314,14 @@ export default function CourseDetail() {
                   <div className="chapter-resources">
                     {Array.isArray(chapter.content) && chapter.content.map((c: any, idx2: number) => {
                       const isGridFs = typeof c.url === 'string' && c.url.startsWith('/api/files');
-                      const resourceUrl = isGridFs ? c.url : `${import.meta.env.VITE_MINIO_URL}/${c.url}`;
+                      // If the app is deployed as a static site (e.g. Render static service),
+                      // relative paths like /api/files/... will be served by the static host
+                      // and typically return 404. Prefer absolute API base when provided.
+                      const apiBase = (import.meta.env.VITE_API_URL || '').toString();
+                      const trimmedApiBase = apiBase ? apiBase.replace(/\/$/, '') : '';
+                      const resourceUrl = isGridFs
+                        ? (trimmedApiBase ? `${trimmedApiBase}${c.url}` : c.url)
+                        : `${import.meta.env.VITE_MINIO_URL}/${c.url}`;
 
                       if (c.type === 'video') {
                         return (
